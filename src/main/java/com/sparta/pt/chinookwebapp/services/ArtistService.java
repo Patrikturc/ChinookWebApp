@@ -1,10 +1,12 @@
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +30,14 @@ public class ArtistService {
     }
 
     public Artist createArtist(Artist artist) {
+        List<Artist> allArtists = artistRepository.findAll();
+
+        int maxId = allArtists.stream()
+                .max(Comparator.comparingInt(Artist::getId))
+                .map(Artist::getId)
+                .orElse(0);
+        artist.setId(maxId + 1);
+
         return artistRepository.save(artist);
     }
 

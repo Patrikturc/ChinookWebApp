@@ -8,6 +8,7 @@ import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,8 +38,18 @@ public class AlbumService {
 
     public Album createAlbum(Album album, String artistName) {
         Optional<Artist> artistOptional = artistRepository.findByName(artistName);
+
         if (artistOptional.isPresent()) {
             album.setArtist(artistOptional.get());
+
+            List<Album> allAlbums = albumRepository.findAll();
+            int maxId = allAlbums.stream()
+                    .max(Comparator.comparingInt(Album::getId))
+                    .map(Album::getId)
+                    .orElse(0);
+
+            album.setId(maxId + 1);
+
             return albumRepository.save(album);
         } else {
             throw new IllegalArgumentException("Artist not found: " + artistName);

@@ -37,12 +37,14 @@ public class AlbumController {
     public ResponseEntity<AlbumDTO> createAlbum(@RequestBody AlbumDTO albumDTO) {
         try {
             Album album = new Album();
-            album.setId(albumDTO.getId());  // Set the ID provided in the request
             album.setTitle(albumDTO.getTitle());
-
             Album createdAlbum = albumService.createAlbum(album, albumDTO.getArtistName());
-            return ResponseEntity.ok(new AlbumDTO(createdAlbum.getId(), createdAlbum.getTitle(),
-                    createdAlbum.getArtist().getName()));
+
+            return ResponseEntity.ok(new AlbumDTO(
+                    createdAlbum.getId(),
+                    createdAlbum.getTitle(),
+                    createdAlbum.getArtist().getName()
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }

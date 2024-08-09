@@ -29,6 +29,12 @@ public class ArtistService {
         return artistRepository.findById(id);
     }
 
+    public Optional<Artist> findArtistByName(String artistName) {
+        return artistRepository.findAll().stream()
+                .filter(artist -> artist.getName().equalsIgnoreCase(artistName))
+                .findFirst();
+    }
+
     public Artist createArtist(Artist artist) {
         List<Artist> allArtists = artistRepository.findAll();
 

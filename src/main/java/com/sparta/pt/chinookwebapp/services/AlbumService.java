@@ -4,7 +4,6 @@ import com.sparta.pt.chinookwebapp.dtos.AlbumDTO;
 import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
-import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,12 +16,12 @@ import java.util.stream.Collectors;
 public class AlbumService {
 
     private final AlbumRepository albumRepository;
-    private final ArtistRepository artistRepository;
+    private final ArtistService artistService;
 
     @Autowired
-    public AlbumService(AlbumRepository albumRepository, ArtistRepository artistRepository) {
+    public AlbumService(AlbumRepository albumRepository, ArtistService artistService) {
         this.albumRepository = albumRepository;
-        this.artistRepository = artistRepository;
+        this.artistService = artistService;
     }
 
     public List<AlbumDTO> getAllAlbums() {
@@ -37,7 +36,7 @@ public class AlbumService {
     }
 
     public Album createAlbum(Album album, String artistName) {
-        Optional<Artist> artistOptional = artistRepository.findByName(artistName);
+        Optional<Artist> artistOptional = artistService.findArtistByName(artistName);
 
         if (artistOptional.isPresent()) {
             album.setArtist(artistOptional.get());
@@ -60,7 +59,7 @@ public class AlbumService {
         return albumRepository.findById(id)
                 .flatMap(existingAlbum -> {
                     existingAlbum.setTitle(albumDetails.getTitle());
-                    Optional<Artist> artistOptional = artistRepository.findByName(artistName);
+                    Optional<Artist> artistOptional = artistService.findArtistByName(artistName);
                     if (artistOptional.isPresent()) {
                         existingAlbum.setArtist(artistOptional.get());
                         return Optional.of(albumRepository.save(existingAlbum));

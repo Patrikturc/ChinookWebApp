@@ -36,7 +36,7 @@ public class AlbumService {
     }
 
     public Album createAlbum(Album album, String artistName) {
-        Optional<Artist> artistOptional = artistService.findArtistByName(artistName);
+        Optional<Artist> artistOptional = artistService.getArtistByName(artistName);
 
         if (artistOptional.isPresent()) {
             album.setArtist(artistOptional.get());
@@ -59,7 +59,7 @@ public class AlbumService {
         return albumRepository.findById(id)
                 .flatMap(existingAlbum -> {
                     existingAlbum.setTitle(albumDetails.getTitle());
-                    Optional<Artist> artistOptional = artistService.findArtistByName(artistName);
+                    Optional<Artist> artistOptional = artistService.getArtistByName(artistName);
                     if (artistOptional.isPresent()) {
                         existingAlbum.setArtist(artistOptional.get());
                         return Optional.of(albumRepository.save(existingAlbum));

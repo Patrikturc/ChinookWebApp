@@ -1,6 +1,5 @@
 package com.sparta.pt.chinookwebapp.services;
 
-import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ArtistService {
@@ -29,7 +27,7 @@ public class ArtistService {
         return artistRepository.findById(id);
     }
 
-    public Optional<Artist> findArtistByName(String artistName) {
+    public Optional<Artist> getArtistByName(String artistName) {
         return artistRepository.findAll().stream()
                 .filter(artist -> artist.getName().equalsIgnoreCase(artistName))
                 .findFirst();

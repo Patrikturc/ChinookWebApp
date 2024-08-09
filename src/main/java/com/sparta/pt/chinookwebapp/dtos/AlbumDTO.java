@@ -3,7 +3,10 @@ package com.sparta.pt.chinookwebapp.dtos;
 public class AlbumDTO {
     private Integer id;
     private String title;
-    private String artistName;
+    private String artistName;  // Change to String for direct artist name
+
+    public AlbumDTO() {
+    }
 
     public AlbumDTO(Integer id, String title, String artistName) {
         this.id = id;

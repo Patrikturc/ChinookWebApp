@@ -2,7 +2,9 @@ package com.sparta.pt.chinookwebapp.services;
 
 import com.sparta.pt.chinookwebapp.dtos.AlbumDTO;
 import com.sparta.pt.chinookwebapp.models.Album;
+import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
+import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +16,12 @@ import java.util.stream.Collectors;
 public class AlbumService {
 
     private final AlbumRepository albumRepository;
+    private final ArtistRepository artistRepository;
 
     @Autowired
-    public AlbumService(AlbumRepository albumRepository) {
+    public AlbumService(AlbumRepository albumRepository, ArtistRepository artistRepository) {
         this.albumRepository = albumRepository;
+        this.artistRepository = artistRepository;
     }
 
     public List<AlbumDTO> getAllAlbums() {
@@ -31,16 +35,27 @@ public class AlbumService {
                 .map(album -> new AlbumDTO(album.getId(), album.getTitle(), album.getArtist().getName()));
     }
 
-    public Album createAlbum(Album album) {
-        return albumRepository.save(album);
+    public Album createAlbum(Album album, String artistName) {
+        Optional<Artist> artistOptional = artistRepository.findByName(artistName);
+        if (artistOptional.isPresent()) {
+            album.setArtist(artistOptional.get());
+            return albumRepository.save(album);
+        } else {
+            throw new IllegalArgumentException("Artist not found: " + artistName);
+        }
     }
 
-    public Optional<Album> updateAlbum(Integer id, Album albumDetails) {
+    public Optional<Album> updateAlbum(Integer id, Album albumDetails, String artistName) {
         return albumRepository.findById(id)
-                .map(album -> {
-                    album.setTitle(albumDetails.getTitle());
-                    album.setArtist(albumDetails.getArtist());
-                    return albumRepository.save(album);
+                .flatMap(existingAlbum -> {
+                    existingAlbum.setTitle(albumDetails.getTitle());
+                    Optional<Artist> artistOptional = artistRepository.findByName(artistName);
+                    if (artistOptional.isPresent()) {
+                        existingAlbum.setArtist(artistOptional.get());
+                        return Optional.of(albumRepository.save(existingAlbum));
+                    } else {
+                        return Optional.empty();  // Artist not found
+                    }
                 });
     }
 

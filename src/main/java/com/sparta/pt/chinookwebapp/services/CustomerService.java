@@ -8,11 +8,10 @@ import com.sparta.pt.chinookwebapp.repositories.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import java.util.Comparator;
 
 @Service
 public class CustomerService {
@@ -28,44 +27,17 @@ public class CustomerService {
 
     public List<CustomerDTO> getAllCustomers() {
         return customerRepository.findAll().stream()
-                .map(customer -> new CustomerDTO(
-                        customer.getId(),
-                        customer.getFirstName(),
-                        customer.getLastName(),
-                        customer.getCompany(),
-                        customer.getAddress(),
-                        customer.getCity(),
-                        customer.getState(),
-                        customer.getCountry(),
-                        customer.getPostalCode(),
-                        customer.getPhone(),
-                        customer.getFax(),
-                        customer.getEmail(),
-                        customer.getSupportRep() != null ? customer.getSupportRep().getFirstName() + " " + customer.getSupportRep().getLastName() : null))
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public Optional<CustomerDTO> getCustomerById(Integer id) {
         return customerRepository.findById(id)
-                .map(customer -> new CustomerDTO(
-                        customer.getId(),
-                        customer.getFirstName(),
-                        customer.getLastName(),
-                        customer.getCompany(),
-                        customer.getAddress(),
-                        customer.getCity(),
-                        customer.getState(),
-                        customer.getCountry(),
-                        customer.getPostalCode(),
-                        customer.getPhone(),
-                        customer.getFax(),
-                        customer.getEmail(),
-                        customer.getSupportRep() != null ? customer.getSupportRep().getFirstName() + " " + customer.getSupportRep().getLastName() : null));
+                .map(this::convertToDTO);
     }
 
-    public Customer createCustomer(Customer customer, String supportRepName) {
-        setSupportRepByName(customer, supportRepName);
-
+    public CustomerDTO createCustomer(CustomerDTO customerDTO) {
+        Customer customer = convertToEntity(customerDTO);
         List<Customer> allCustomers = customerRepository.findAll();
         int maxId = allCustomers.stream()
                 .max(Comparator.comparingInt(Customer::getId))
@@ -74,28 +46,19 @@ public class CustomerService {
 
         customer.setId(maxId + 1);
 
-        return customerRepository.save(customer);
+        setSupportRepByName(customer, customerDTO.getSupportRepName());
+        Customer savedCustomer = customerRepository.save(customer);
+        return convertToDTO(savedCustomer);
     }
 
-    public Optional<Customer> updateCustomer(Integer id, Customer customerDetails, String supportRepName) {
+    public Optional<CustomerDTO> updateCustomer(Integer id, CustomerDTO customerDTO) {
         return customerRepository.findById(id)
-                .map(customer -> {
-                    customer.setFirstName(customerDetails.getFirstName());
-                    customer.setLastName(customerDetails.getLastName());
-                    customer.setCompany(customerDetails.getCompany());
-                    customer.setAddress(customerDetails.getAddress());
-                    customer.setCity(customerDetails.getCity());
-                    customer.setState(customerDetails.getState());
-                    customer.setCountry(customerDetails.getCountry());
-                    customer.setPostalCode(customerDetails.getPostalCode());
-                    customer.setPhone(customerDetails.getPhone());
-                    customer.setFax(customerDetails.getFax());
-                    customer.setEmail(customerDetails.getEmail());
-
-                    // Set the support rep
-                    setSupportRepByName(customer, supportRepName);
-
-                    return customerRepository.save(customer);
+                .map(existingCustomer -> {
+                    Customer updatedCustomer = convertToEntity(customerDTO);
+                    updatedCustomer.setId(id); // Ensure ID is preserved
+                    setSupportRepByName(updatedCustomer, customerDTO.getSupportRepName());
+                    Customer savedCustomer = customerRepository.save(updatedCustomer);
+                    return convertToDTO(savedCustomer);
                 });
     }
 
@@ -120,5 +83,39 @@ public class CustomerService {
             return true;
         }
         return false;
+    }
+
+    private Customer convertToEntity(CustomerDTO dto) {
+        Customer customer = new Customer();
+        customer.setFirstName(dto.getFirstName());
+        customer.setLastName(dto.getLastName());
+        customer.setCompany(dto.getCompany());
+        customer.setAddress(dto.getAddress());
+        customer.setCity(dto.getCity());
+        customer.setState(dto.getState());
+        customer.setCountry(dto.getCountry());
+        customer.setPostalCode(dto.getPostalCode());
+        customer.setPhone(dto.getPhone());
+        customer.setFax(dto.getFax());
+        customer.setEmail(dto.getEmail());
+        return customer;
+    }
+
+    private CustomerDTO convertToDTO(Customer customer) {
+        return new CustomerDTO(
+                customer.getId(),
+                customer.getFirstName(),
+                customer.getLastName(),
+                customer.getCompany(),
+                customer.getAddress(),
+                customer.getCity(),
+                customer.getState(),
+                customer.getCountry(),
+                customer.getPostalCode(),
+                customer.getPhone(),
+                customer.getFax(),
+                customer.getEmail(),
+                customer.getSupportRep() != null ? customer.getSupportRep().getFirstName() + " " + customer.getSupportRep().getLastName() : null
+        );
     }
 }

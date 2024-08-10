@@ -42,7 +42,19 @@ public class CustomerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerDTO> updateCustomer(
+    public ResponseEntity<CustomerDTO> upsertCustomer(
+            @PathVariable Integer id,
+            @RequestBody CustomerDTO customerDTO) {
+        try {
+            CustomerDTO upsertedCustomerDTO = customerService.upsertCustomer(id, customerDTO);
+            return ResponseEntity.ok(upsertedCustomerDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<CustomerDTO> partialUpdateCustomer(
             @PathVariable Integer id,
             @RequestBody CustomerDTO customerDTO) {
         try {
@@ -52,6 +64,7 @@ public class CustomerController {
             return ResponseEntity.badRequest().build();
         }
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable Integer id) {

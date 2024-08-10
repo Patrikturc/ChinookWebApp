@@ -55,11 +55,28 @@ public class CustomerService {
         return customerRepository.findById(id)
                 .map(existingCustomer -> {
                     Customer updatedCustomer = convertToEntity(customerDTO);
-                    updatedCustomer.setId(id); // Ensure ID is preserved
+                    updatedCustomer.setId(id);
                     setSupportRepByName(updatedCustomer, customerDTO.getSupportRepName());
                     Customer savedCustomer = customerRepository.save(updatedCustomer);
                     return convertToDTO(savedCustomer);
                 });
+    }
+
+    public CustomerDTO upsertCustomer(Integer id, CustomerDTO customerDTO) {
+        Customer customer = convertToEntity(customerDTO);
+        setSupportRepByName(customer, customerDTO.getSupportRepName());
+
+        if (!customerRepository.existsById(id)) {
+            customer = convertToEntity(customerDTO);
+            customer.setId(id);
+            setSupportRepByName(customer, customerDTO.getSupportRepName());
+            Customer savedCustomer = customerRepository.save(customer);
+            return convertToDTO(savedCustomer);
+        }
+        customer.setId(id);
+        updateCustomer(id, customerDTO);
+
+        return convertToDTO(customer);
     }
 
     private void setSupportRepByName(Customer customer, String supportRepName) {

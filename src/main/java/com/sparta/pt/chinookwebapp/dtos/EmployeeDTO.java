@@ -1,12 +1,18 @@
 package com.sparta.pt.chinookwebapp.dtos;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
 public class EmployeeDTO {
     private Integer id;
     private String firstName;
     private String lastName;
     private String title;
-    private String birthDate;
-    private String hireDate;
+    private LocalDate birthDate;
+    private LocalDate hireDate;
     private String address;
     private String city;
     private String state;
@@ -15,10 +21,15 @@ public class EmployeeDTO {
     private String phone;
     private String fax;
     private String email;
+    private Integer reportsToId;
+    private String reportsToName;
 
-    public EmployeeDTO(Integer id, String firstName, String lastName, String title, String birthDate, String hireDate,
+    public EmployeeDTO() {
+    }
+
+    public EmployeeDTO(Integer id, String firstName, String lastName, String title, LocalDate birthDate, LocalDate hireDate,
                        String address, String city, String state, String country, String postalCode, String phone,
-                       String fax, String email) {
+                       String fax, String email, Integer reportsToId, String reportsToName) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -33,6 +44,36 @@ public class EmployeeDTO {
         this.phone = phone;
         this.fax = fax;
         this.email = email;
+        this.reportsToId = reportsToId;
+        this.reportsToName = reportsToName;
+    }
+
+    public EmployeeDTO(Integer id, String firstName, String lastName, String title, LocalDate birthDate, LocalDate hireDate,
+                       String address, String city, String state, String country, String postalCode, String phone,
+                       String fax, String email, String reportsToName) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.title = title;
+        this.birthDate = birthDate;
+        this.hireDate = hireDate;
+        this.address = address;
+        this.city = city;
+        this.state = state;
+        this.country = country;
+        this.postalCode = postalCode;
+        this.phone = phone;
+        this.fax = fax;
+        this.email = email;
+        this.reportsToName = reportsToName;
+    }
+    @JsonIgnore
+    public Instant getBirthDateAsInstant() {
+        return birthDate != null ? birthDate.atStartOfDay(ZoneId.systemDefault()).toInstant() : null;
+    }
+    @JsonIgnore
+    public Instant getHireDateAsInstant() {
+        return hireDate != null ? hireDate.atStartOfDay(ZoneId.systemDefault()).toInstant() : null;
     }
 
     public Integer getId() {
@@ -67,19 +108,19 @@ public class EmployeeDTO {
         this.title = title;
     }
 
-    public String getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(String birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 
-    public String getHireDate() {
+    public LocalDate getHireDate() {
         return hireDate;
     }
 
-    public void setHireDate(String hireDate) {
+    public void setHireDate(LocalDate hireDate) {
         this.hireDate = hireDate;
     }
 
@@ -145,5 +186,21 @@ public class EmployeeDTO {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Integer getReportsToId() {
+        return reportsToId;
+    }
+
+    public void setReportsToId(Integer reportsToId) {
+        this.reportsToId = reportsToId;
+    }
+
+    public String getReportsToName() {
+        return reportsToName;
+    }
+
+    public void setReportsToName(String reportsToName) {
+        this.reportsToName = reportsToName;
     }
 }

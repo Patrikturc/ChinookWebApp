@@ -33,14 +33,21 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public Employee createEmployee(@RequestBody Employee employee) {
-        return employeeService.createEmployee(employee);
+    public ResponseEntity<EmployeeDTO> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        try {
+            EmployeeDTO createdEmployeeDTO = employeeService.createEmployee(employeeDTO);
+            return ResponseEntity.ok(createdEmployeeDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable Integer id, @RequestBody Employee employeeDetails) {
-        Optional<Employee> updatedEmployee = employeeService.updateEmployee(id, employeeDetails);
-        return updatedEmployee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EmployeeDTO> updateEmployee(
+            @PathVariable Integer id,
+            @RequestBody EmployeeDTO employeeDTO) {
+        Optional<EmployeeDTO> updatedEmployeeDTO = employeeService.updateEmployee(id, employeeDTO);
+        return updatedEmployeeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")

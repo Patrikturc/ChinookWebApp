@@ -13,14 +13,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-    private final EmployeeRepository employeeRepository; // Assuming you have an EmployeeRepository
+    private final EmployeeRepository employeeRepository;
 
     @Autowired
     public CustomerService(CustomerRepository customerRepository, EmployeeRepository employeeRepository) {
@@ -68,7 +66,6 @@ public class CustomerService {
     public Customer createCustomer(Customer customer, String supportRepName) {
         setSupportRepByName(customer, supportRepName);
 
-        // Set auto-increment ID manually (optional, as Hibernate usually manages this)
         List<Customer> allCustomers = customerRepository.findAll();
         int maxId = allCustomers.stream()
                 .max(Comparator.comparingInt(Customer::getId))

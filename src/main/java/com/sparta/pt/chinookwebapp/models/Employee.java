@@ -1,9 +1,6 @@
 package com.sparta.pt.chinookwebapp.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -29,6 +26,10 @@ public class Employee {
     @Size(max = 30)
     @Column(name = "Title", length = 30)
     private String title;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ReportsTo")
+    private Employee reportsTo;
 
     @Column(name = "BirthDate")
     private Instant birthDate;
@@ -98,6 +99,14 @@ public class Employee {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Employee getReportsTo() {
+        return reportsTo;
+    }
+
+    public void setReportsTo(Employee reportsTo) {
+        this.reportsTo = reportsTo;
     }
 
     public Instant getBirthDate() {

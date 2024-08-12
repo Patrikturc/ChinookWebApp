@@ -46,8 +46,20 @@ public class EmployeeController {
     public ResponseEntity<EmployeeDTO> updateEmployee(
             @PathVariable Integer id,
             @RequestBody EmployeeDTO employeeDTO) {
-        Optional<EmployeeDTO> updatedEmployeeDTO = employeeService.updateEmployee(id, employeeDTO);
+        Optional<EmployeeDTO> updatedEmployeeDTO = Optional.ofNullable(employeeService.upsertEmployee(id, employeeDTO));
         return updatedEmployeeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<EmployeeDTO> partialUpdateEmployee(
+            @PathVariable Integer id,
+            @RequestBody EmployeeDTO employeeDTO) {
+        try {
+            Optional<EmployeeDTO> updatedEmployeeDTO = employeeService.updateEmployee(id, employeeDTO);
+            return updatedEmployeeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @DeleteMapping("/{id}")

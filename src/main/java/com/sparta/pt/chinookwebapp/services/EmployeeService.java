@@ -60,6 +60,22 @@ public class EmployeeService {
                 });
     }
 
+    public EmployeeDTO upsertEmployee(Integer id, EmployeeDTO employeeDTO) {
+        Optional<Employee> existingEmployee = employeeRepository.findById(id);
+        Employee employee;
+
+        if (existingEmployee.isPresent()) {
+            employee = existingEmployee.get();
+            updateEntityFromDTO(employee, employeeDTO);
+        } else {
+            employee = convertToEntity(employeeDTO);
+            employee.setId(id);
+        }
+
+        Employee savedEmployee = employeeRepository.save(employee);
+        return convertToDTO(savedEmployee);
+    }
+
     private void setReportsToById(Employee employee, Integer reportsToId) {
         if (reportsToId != null) {
             employeeRepository.findById(reportsToId).ifPresent(employee::setReportsTo);

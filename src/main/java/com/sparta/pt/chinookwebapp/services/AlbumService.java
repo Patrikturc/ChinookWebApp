@@ -64,7 +64,7 @@ public class AlbumService {
                         existingAlbum.setArtist(artistOptional.get());
                         return Optional.of(albumRepository.save(existingAlbum));
                     } else {
-                        return Optional.empty();  // Artist not found
+                        return Optional.empty();
                     }
                 });
     }

@@ -22,14 +22,14 @@ public class EmployeeDTO {
     private String fax;
     private String email;
     private Integer reportsToId;
-    private String reportsToName;
+    private String reportsToFullName;
 
     public EmployeeDTO() {
     }
 
     public EmployeeDTO(Integer id, String firstName, String lastName, String title, LocalDate birthDate, LocalDate hireDate,
                        String address, String city, String state, String country, String postalCode, String phone,
-                       String fax, String email, Integer reportsToId, String reportsToName) {
+                       String fax, String email, Integer reportsToId, String reportsToFullName) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -45,12 +45,12 @@ public class EmployeeDTO {
         this.fax = fax;
         this.email = email;
         this.reportsToId = reportsToId;
-        this.reportsToName = reportsToName;
+        this.reportsToFullName = reportsToFullName;
     }
 
     public EmployeeDTO(Integer id, String firstName, String lastName, String title, LocalDate birthDate, LocalDate hireDate,
                        String address, String city, String state, String country, String postalCode, String phone,
-                       String fax, String email, String reportsToName) {
+                       String fax, String email, String reportsToFullName) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -65,7 +65,7 @@ public class EmployeeDTO {
         this.phone = phone;
         this.fax = fax;
         this.email = email;
-        this.reportsToName = reportsToName;
+        this.reportsToFullName = reportsToFullName;
     }
     @JsonIgnore
     public Instant getBirthDateAsInstant() {
@@ -74,6 +74,14 @@ public class EmployeeDTO {
     @JsonIgnore
     public Instant getHireDateAsInstant() {
         return hireDate != null ? hireDate.atStartOfDay(ZoneId.systemDefault()).toInstant() : null;
+    }
+
+    public String getReportsToFullName() {
+        return reportsToFullName;
+    }
+
+    public void setReportsToFullName(String reportsToFullName) {
+        this.reportsToFullName = reportsToFullName;
     }
 
     public Integer getId() {
@@ -194,13 +202,5 @@ public class EmployeeDTO {
 
     public void setReportsToId(Integer reportsToId) {
         this.reportsToId = reportsToId;
-    }
-
-    public String getReportsToName() {
-        return reportsToName;
-    }
-
-    public void setReportsToName(String reportsToName) {
-        this.reportsToName = reportsToName;
     }
 }

@@ -1,6 +1,7 @@
 package com.sparta.pt.chinookwebapp.services;
 
 import com.sparta.pt.chinookwebapp.dtos.CustomerDTO;
+import com.sparta.pt.chinookwebapp.exceptions.InvalidInputException;
 import com.sparta.pt.chinookwebapp.models.Customer;
 import com.sparta.pt.chinookwebapp.models.Employee;
 import com.sparta.pt.chinookwebapp.repositories.CustomerRepository;
@@ -37,18 +38,22 @@ public class CustomerService {
     }
 
     public CustomerDTO createCustomer(CustomerDTO customerDTO) {
-        Customer customer = convertToEntity(customerDTO);
-        List<Customer> allCustomers = customerRepository.findAll();
-        int maxId = allCustomers.stream()
-                .max(Comparator.comparingInt(Customer::getId))
-                .map(Customer::getId)
-                .orElse(0);
+            Customer customer = convertToEntity(customerDTO);
+            List<Customer> allCustomers = customerRepository.findAll();
+            int maxId = allCustomers.stream()
+                    .max(Comparator.comparingInt(Customer::getId))
+                    .map(Customer::getId)
+                    .orElse(0);
 
-        customer.setId(maxId + 1);
+            customer.setId(maxId + 1);
 
-        setSupportRepByName(customer, customerDTO.getSupportRepName());
-        Customer savedCustomer = customerRepository.save(customer);
-        return convertToDTO(savedCustomer);
+            try{
+                setSupportRepByName(customer, customerDTO.getSupportRepName());
+            } catch (IllegalArgumentException e) {
+                throw new InvalidInputException(e.getMessage());
+            }
+            Customer savedCustomer = customerRepository.save(customer);
+            return convertToDTO(savedCustomer);
     }
 
     public Optional<CustomerDTO> updateCustomer(Integer id, CustomerDTO customerDTO) {
@@ -56,7 +61,12 @@ public class CustomerService {
                 .map(existingCustomer -> {
                     Customer updatedCustomer = convertToEntity(customerDTO);
                     updatedCustomer.setId(id);
-                    setSupportRepByName(updatedCustomer, customerDTO.getSupportRepName());
+
+                    try{
+                        setSupportRepByName(updatedCustomer, customerDTO.getSupportRepName());
+                    } catch (IllegalArgumentException e) {
+                        throw new InvalidInputException(e.getMessage());
+                    }
                     Customer savedCustomer = customerRepository.save(updatedCustomer);
                     return convertToDTO(savedCustomer);
                 });
@@ -69,7 +79,11 @@ public class CustomerService {
         if (!customerRepository.existsById(id)) {
             customer = convertToEntity(customerDTO);
             customer.setId(id);
-            setSupportRepByName(customer, customerDTO.getSupportRepName());
+            try{
+                setSupportRepByName(customer, customerDTO.getSupportRepName());
+            } catch (IllegalArgumentException e) {
+                throw new InvalidInputException(e.getMessage());
+            }
             Customer savedCustomer = customerRepository.save(customer);
             return convertToDTO(savedCustomer);
         }
@@ -88,8 +102,13 @@ public class CustomerService {
                 Optional<Employee> supportRep = employeeRepository.findAll().stream()
                         .filter(e -> e.getFirstName().equalsIgnoreCase(firstName) && e.getLastName().equalsIgnoreCase(lastName))
                         .findFirst();
-
-                supportRep.ifPresent(customer::setSupportRep);
+                if (supportRep.isPresent()) {
+                    customer.setSupportRep(supportRep.get());
+                } else {
+                    throw new IllegalArgumentException("Sorry, that employee doesn't exist.");
+                }
+            } else {
+                throw new IllegalArgumentException("Please provide both first and last name.");
             }
         }
     }

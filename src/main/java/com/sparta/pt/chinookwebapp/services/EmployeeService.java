@@ -1,6 +1,7 @@
 package com.sparta.pt.chinookwebapp.services;
 
 import com.sparta.pt.chinookwebapp.dtos.EmployeeDTO;
+import com.sparta.pt.chinookwebapp.exceptions.InvalidInputException;
 import com.sparta.pt.chinookwebapp.models.Employee;
 import com.sparta.pt.chinookwebapp.repositories.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 
 @Service
 public class EmployeeService {
@@ -38,26 +38,40 @@ public class EmployeeService {
     }
 
     public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
-        Employee employee = convertToEntity(employeeDTO);
-        List<Employee> allEmployees = employeeRepository.findAll();
-        int maxId = allEmployees.stream()
-                .max(Comparator.comparingInt(Employee::getId))
-                .map(Employee::getId)
-                .orElse(0);
+        try {
+            Employee employee = convertToEntity(employeeDTO);
+            List<Employee> allEmployees = employeeRepository.findAll();
+            int maxId = allEmployees.stream()
+                    .max(Comparator.comparingInt(Employee::getId))
+                    .map(Employee::getId)
+                    .orElse(0);
 
-        employee.setId(maxId + 1);
-        Employee createdEmployee = employeeRepository.save(employee);
+            employee.setId(maxId + 1);
 
-        return convertToDTO(createdEmployee);
+            setReportsToByName(employee, employeeDTO.getReportsToFullName());
+
+            Employee createdEmployee = employeeRepository.save(employee);
+            return convertToDTO(createdEmployee);
+
+        } catch (IllegalArgumentException e) {
+            throw new InvalidInputException(e.getMessage());
+        }
     }
 
     public Optional<EmployeeDTO> updateEmployee(Integer id, EmployeeDTO employeeDTO) {
-        return employeeRepository.findById(id)
-                .map(employee -> {
-                    updateEntityFromDTO(employee, employeeDTO);
-                    Employee updatedEmployee = employeeRepository.save(employee);
-                    return convertToDTO(updatedEmployee);
-                });
+        try {
+            return employeeRepository.findById(id)
+                    .map(employee -> {
+                        updateEntityFromDTO(employee, employeeDTO);
+
+                        setReportsToByName(employee, employeeDTO.getReportsToFullName());
+
+                        Employee updatedEmployee = employeeRepository.save(employee);
+                        return convertToDTO(updatedEmployee);
+                    });
+        } catch (IllegalArgumentException e) {
+            throw new InvalidInputException(e.getMessage());
+        }
     }
 
     public EmployeeDTO upsertEmployee(Integer id, EmployeeDTO employeeDTO) {
@@ -72,8 +86,35 @@ public class EmployeeService {
             employee.setId(id);
         }
 
+        try {
+            setReportsToByName(employee, employeeDTO.getReportsToFullName());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidInputException(e.getMessage());
+        }
+
         Employee savedEmployee = employeeRepository.save(employee);
         return convertToDTO(savedEmployee);
+    }
+
+    private void setReportsToByName(Employee employee, String reportsToFullName) {
+        if (reportsToFullName != null && !reportsToFullName.isEmpty()) {
+            String[] nameParts = reportsToFullName.split(" ");
+            if (nameParts.length == 2) {
+                String firstName = nameParts[0];
+                String lastName = nameParts[1];
+                Optional<Employee> reportsToEmployee = employeeRepository.findAll().stream()
+                        .filter(e -> e.getFirstName().equalsIgnoreCase(firstName) && e.getLastName().equalsIgnoreCase(lastName))
+                        .findFirst();
+
+                if (reportsToEmployee.isPresent()) {
+                    employee.setReportsTo(reportsToEmployee.get());
+                } else {
+                    throw new IllegalArgumentException("Sorry, that employee doesn't exist.");
+                }
+            } else {
+                throw new IllegalArgumentException("Please provide both first and last name.");
+            }
+        }
     }
 
     private void setReportsToById(Employee employee, Integer reportsToId) {

@@ -1,9 +1,11 @@
 package com.sparta.pt.chinookwebapp.controllers.api;
 
 import com.sparta.pt.chinookwebapp.dtos.EmployeeDTO;
-import com.sparta.pt.chinookwebapp.models.Employee;
+import com.sparta.pt.chinookwebapp.exceptions.InvalidInputException;
+import com.sparta.pt.chinookwebapp.exceptions.ErrorResponse;
 import com.sparta.pt.chinookwebapp.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,15 +34,17 @@ public class EmployeeController {
         return employee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @RequestMapping
     @PostMapping
-    public ResponseEntity<EmployeeDTO> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
+    public ResponseEntity<?> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
         try {
-            EmployeeDTO createdEmployeeDTO = employeeService.createEmployee(employeeDTO);
-            return ResponseEntity.ok(createdEmployeeDTO);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            EmployeeDTO createdEmployee = employeeService.createEmployee(employeeDTO);
+            return ResponseEntity.ok(createdEmployee);
+        } catch (InvalidInputException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
         }
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDTO> updateEmployee(

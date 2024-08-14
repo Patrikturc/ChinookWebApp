@@ -11,11 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/logins")
@@ -52,7 +54,7 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(password));
 
         Set<Role> roles = new HashSet<>();
-        roles.add(roleRepository.findByName(role).orElseThrow(() -> new RuntimeException("Role not found")));
+        roles.add(roleRepository.findByName(role.toUpperCase()).orElseThrow(() -> new RuntimeException("Role not found")));
         user.setRoles(roles);
 
         userRepository.save(user);
@@ -65,14 +67,12 @@ public class UserController {
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("admin"));
+        Set<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
 
-        if (isAdmin) {
-            String token = jwtTokenService.generateToken(authentication.getName());
-            return ResponseEntity.ok(token);
-        } else {
-            return ResponseEntity.ok("Welcome to Chinook API!");
-        }
+        String token = jwtTokenService.generateToken(authentication.getName(), roles);
+
+        return ResponseEntity.ok(token);
     }
 }

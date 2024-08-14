@@ -25,7 +25,7 @@ public class JwtTokenService {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 55999 * 63 * 60 * 10)) // max duration?
+                .setExpiration(new Date(System.currentTimeMillis() + 2147483647)) // max int duration (roughly 25days)
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }

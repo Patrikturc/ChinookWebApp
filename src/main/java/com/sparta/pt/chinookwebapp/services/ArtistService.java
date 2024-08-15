@@ -45,11 +45,21 @@ public class ArtistService {
         return artistRepository.save(artist);
     }
 
-    public Optional<Artist> updateArtist(Integer id, Artist artistDetails) {
+    public Artist upsertArtist(Integer id, Artist artistDetails) {
+        Artist artist = artistRepository.findById(id).orElse(new Artist());
+        artist.setId(id);
+        artist.setName(artistDetails.getName());
+
+        return artistRepository.save(artist);
+    }
+
+    public Optional<Artist> patchArtist(Integer id, Artist artistDetails) {
         return artistRepository.findById(id)
-                .map(artist -> {
-                    artist.setName(artistDetails.getName());
-                    return artistRepository.save(artist);
+                .map(existingArtist -> {
+                    if (artistDetails.getName() != null) {
+                        existingArtist.setName(artistDetails.getName());  // Update only non-null fields
+                    }
+                    return artistRepository.save(existingArtist);
                 });
     }
 

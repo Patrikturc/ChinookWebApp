@@ -69,6 +69,24 @@ public class AlbumService {
                 });
     }
 
+    public Optional<Album> patchAlbum(Integer id, Album albumDetails, String artistName) {
+        return albumRepository.findById(id)
+                .flatMap(existingAlbum -> {
+                    if (albumDetails.getTitle() != null) {
+                        existingAlbum.setTitle(albumDetails.getTitle());
+                    }
+                    if (artistName != null) {
+                        Optional<Artist> artistOptional = artistService.getArtistByName(artistName);
+                        if (artistOptional.isPresent()) {
+                            existingAlbum.setArtist(artistOptional.get());
+                        } else {
+                            return Optional.empty();
+                        }
+                    }
+                    return Optional.of(albumRepository.save(existingAlbum));
+                });
+    }
+
     public boolean deleteAlbum(Integer id) {
         if (albumRepository.existsById(id)) {
             albumRepository.deleteById(id);

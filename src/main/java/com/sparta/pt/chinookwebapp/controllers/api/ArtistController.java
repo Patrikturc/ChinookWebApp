@@ -38,8 +38,14 @@ public class ArtistController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Artist> updateArtist(@PathVariable Integer id, @RequestBody Artist artistDetails) {
-        Optional<Artist> updatedArtist = artistService.updateArtist(id, artistDetails);
+        Optional<Artist> updatedArtist = Optional.ofNullable(artistService.upsertArtist(id, artistDetails));
         return updatedArtist.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Optional<Artist>> patchArtist(@PathVariable Integer id, @RequestBody Artist artistDetails) {
+        Optional<Artist> updatedArtist = artistService.patchArtist(id, artistDetails);
+        return ResponseEntity.ok(updatedArtist);
     }
 
     @DeleteMapping("/{id}")

@@ -65,6 +65,23 @@ public class AlbumController {
         }
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<AlbumDTO> patchAlbum(@PathVariable Integer id, @RequestBody AlbumDTO albumDTO) {
+        String artistName = albumDTO.getArtistName();
+        Optional<Album> patchedAlbum = albumService.patchAlbum(id, albumDTO, artistName);
+
+        if (patchedAlbum.isPresent()) {
+            AlbumDTO patchedAlbumDTO = new AlbumDTO(
+                    patchedAlbum.get().getId(),
+                    patchedAlbum.get().getTitle(),
+                    patchedAlbum.get().getArtist().getName()
+            );
+            return ResponseEntity.ok(patchedAlbumDTO);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAlbum(@PathVariable Integer id) {
         boolean isDeleted = albumService.deleteAlbum(id);

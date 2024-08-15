@@ -69,7 +69,7 @@ public class AlbumService {
                 });
     }
 
-    public Optional<Album> patchAlbum(Integer id, Album albumDetails, String artistName) {
+    public Optional<Album> patchAlbum(Integer id, AlbumDTO albumDetails, String artistName) {
         return albumRepository.findById(id)
                 .flatMap(existingAlbum -> {
                     if (albumDetails.getTitle() != null) {

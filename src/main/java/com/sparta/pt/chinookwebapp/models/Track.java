@@ -110,7 +110,7 @@ public class Track {
         this.bytes = bytes;
     }
 
-    public BigDecimal getUnitPrice() {
+    public @NotNull BigDecimal getUnitPrice() {
         return unitPrice;
     }
 

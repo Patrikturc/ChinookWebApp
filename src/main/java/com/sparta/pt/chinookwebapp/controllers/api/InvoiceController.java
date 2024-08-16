@@ -31,9 +31,18 @@ public class InvoiceController {
         return invoiceDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/customers/{customerId}")
+    @GetMapping("/customers/by-id/{customerId}")
     public ResponseEntity<List<InvoiceDTO>> getInvoicesByCustomerId(@PathVariable Integer customerId) {
         List<InvoiceDTO> invoices = invoiceService.getInvoicesByCustomerId(customerId);
+        if (invoices.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(invoices);
+    }
+
+    @GetMapping("/customers/by-name/{fullName}")
+    public ResponseEntity<List<InvoiceDTO>> getInvoicesByCustomerFullName(@PathVariable String fullName) {
+        List<InvoiceDTO> invoices = invoiceService.getInvoicesByCustomerFullName(fullName);
         if (invoices.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

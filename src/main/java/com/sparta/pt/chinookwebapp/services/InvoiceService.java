@@ -38,12 +38,29 @@ public class InvoiceService {
 
     public List<InvoiceDTO> getInvoicesByCustomerId(Integer customerId) {
         List<Invoice> allInvoices = invoiceRepository.findAll();
-
         List<Invoice> filteredInvoices = allInvoices.stream()
                 .filter(invoice -> invoice.getCustomer().getId().equals(customerId))
                 .toList();
-
         return filteredInvoices.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<InvoiceDTO> getInvoicesByCustomerFullName(String fullName) {
+        String normalizedFullName = fullName.replaceAll("\\s+", "").toLowerCase();
+        List<Customer> customers = customerRepository.findAll();
+        List<Customer> matchingCustomers = customers.stream()
+                .filter(customer -> (customer.getFirstName() + customer.getLastName())
+                        .replaceAll("\\s+", "")
+                        .toLowerCase()
+                        .contains(normalizedFullName))
+                .toList();
+
+        List<Invoice> invoices = matchingCustomers.stream()
+                .flatMap(customer -> invoiceRepository.findByCustomer(customer).stream())
+                .toList();
+
+        return invoices.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }

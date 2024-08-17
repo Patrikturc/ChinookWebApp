@@ -12,6 +12,9 @@ import com.sparta.pt.chinookwebapp.repositories.GenreRepository;
 import com.sparta.pt.chinookwebapp.repositories.MediatypeRepository;
 import com.sparta.pt.chinookwebapp.repositories.TrackRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -35,10 +38,22 @@ public class TrackService {
         this.genreRepository = genreRepository;
     }
 
-    public List<TrackDTO> getAllTracks() {
-        return trackRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<TrackDTO> getAllTracks(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Track> tracks = trackRepository.findAll(pageable);
+        return tracks.map(this::convertToDTO);
+    }
+
+    public Page<TrackDTO> getTracksByGenreName(String genreName, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Track> tracks = trackRepository.findByGenreNameContainingIgnoreCase(genreName, pageable);
+        return tracks.map(this::convertToDTO);
+    }
+
+    public Page<TrackDTO> getTracksByAlbumTitle(String albumTitle, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Track> tracks = trackRepository.findByAlbumTitleContainingIgnoreCase(albumTitle, pageable);
+        return tracks.map(this::convertToDTO);
     }
 
     public Optional<TrackDTO> getTrackById(int id) {

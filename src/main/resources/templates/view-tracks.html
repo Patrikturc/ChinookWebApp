@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Tracks</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .navbar, .footer {
+            background-color: #1f1f1f;
+        }
+        .list-group-item {
+            background-color: #1f1f1f;
+            border: 1px solid #333;
+        }
+        .page-link {
+            color: #e0e0e0;
+            background-color: #333;
+            border: 1px solid #444;
+        }
+        .page-link:hover {
+            background-color: #444;
+        }
+        .page-item.active .page-link {
+            background-color: #6200ea;
+            border-color: #6200ea;
+        }
+        .btn-primary {
+            background-color: #6200ea;
+            border-color: #6200ea;
+        }
+        .btn-primary:hover {
+            background-color: #3700b3;
+            border-color: #3700b3;
+        }
+        .btn-warning {
+            background-color: #ff5722;
+            border-color: #ff5722;
+        }
+        .btn-warning:hover {
+            background-color: #e64a19;
+            border-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <a class="navbar-brand" th:href="@{/}">Chinook WebApp</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/}">Home</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="text-center">Tracks</h1>
+    <div class="mt-4">
+        <a class="btn btn-primary mb-3" th:href="@{/add-track}">Add Track</a>
+        <ul class="list-group">
+            <li class="list-group-item" th:each="track : ${tracks}">
+                <strong th:text="${track.content.name}">Track Name</strong> - <span th:text="${track.content.albumTitle}">Album Title</span> (<span th:text="${track.content.genreName}">Genre</span>)
+                <br>Composer: <span th:text="${track.content.composer}">Composer</span>
+                <br>Duration: <span th:text="${track.content.milliseconds}">Duration</span> ms
+                <br>Size: <span th:text="${track.content.bytes}">Size</span> bytes
+                <br>Price: $<span th:text="${track.content.unitPrice}">Price</span>
+                <div class="mt-2">
+                    <a class="btn btn-primary btn-sm" th:href="@{/update-track/{id}(id=${track.content.id})}">Update</a>
+                    <a class="btn btn-warning btn-sm" href="#" th:attr="data-id=${track.content.id}, data-name='${track.content.name}'" onclick="confirmDelete(event)">Delete</a>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div class="mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/view-tracks(page=${0}, size=${10})}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/view-tracks(page=${currentPage - 1}, size=${10})}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(currentPage - 1, currentPage + 1)}" th:classappend="${i == currentPage} ? 'active'" th:if="${i >= 0 && i < totalPages}">
+                    <a class="page-link" th:href="@{/view-tracks(page=${i}, size=${10})}" th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage + 1 == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/view-tracks(page=${currentPage + 1}, size=${10})}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage + 1 == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/view-tracks(page=${totalPages - 1}, size=${10})}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<footer class="footer mt-auto py-3 text-center">
+    <div class="container">
+        <span>&copy; 2023 Chinook WebApp</span>
+    </div>
+</footer>
+
+<script>
+    function confirmDelete(event) {
+        event.preventDefault();  // Prevent default link behavior
+        const id = event.target.getAttribute('data-id');
+        const name = event.target.getAttribute('data-name');
+
+        if (confirm('Are you sure you want to delete the track "' + name + '"?')) {
+            fetch('/delete-track/' + id, {
+                method: 'DELETE'
+            }).then(response => {
+                if (response.ok) {
+                    showNotification('Track "' + name + '" was successfully deleted.');
+                    setTimeout(() => {
+                        window.location.reload();  // Reload the page to reflect changes
+                    }, 2000);
+                } else {
+                    alert('Failed to delete the track.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);  // Log any fetch errors
+                alert('Failed to delete the track.');
+            });
+        }
+    }
+
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.remove();
+        }, 2000);
+    }
+</script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

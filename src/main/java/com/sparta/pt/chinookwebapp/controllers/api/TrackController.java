@@ -4,28 +4,62 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
 import com.sparta.pt.chinookwebapp.services.TrackService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/tracks")
+@RequestMapping("api/tracks")
 public class TrackController {
 
+    private final TrackService trackService;
+    private final PaginationUtils<TrackDTO> paginationUtils;
+
     @Autowired
-    private TrackService trackService;
+    public TrackController(TrackService trackService, PaginationUtils<TrackDTO> paginationUtils) {
+        this.trackService = trackService;
+        this.paginationUtils = paginationUtils;
+    }
+
+    @GetMapping("/albums/{albumTitle}")
+    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByAlbumTitle(
+            @PathVariable String albumTitle,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+
+        Page<TrackDTO> tracksPage = trackService.getTracksByAlbumTitle(albumTitle, page, size);
+        return paginationUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
+    }
 
     @GetMapping
-    public List<TrackDTO> getAllTracks() {
-        return trackService.getAllTracks();
+    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getAllTracks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+
+        Page<TrackDTO> tracksPage = trackService.getAllTracks(page, size);
+        return paginationUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TrackDTO> getTrackById(@PathVariable int id) {
         Optional<TrackDTO> trackDTO = trackService.getTrackById(id);
         return trackDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/genres/{genreName}")
+    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByGenreName(
+            @PathVariable String genreName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+
+        Page<TrackDTO> tracksPage = trackService.getTracksByGenreName(genreName, page, size);
+        return paginationUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
     }
 
     @PostMapping

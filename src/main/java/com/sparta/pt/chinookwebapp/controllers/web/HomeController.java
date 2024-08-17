@@ -18,8 +18,11 @@ import java.util.Objects;
 @Controller
 public class HomeController {
 
-    @Autowired
-    private TrackController trackController;
+    private final TrackController trackController;
+
+    public HomeController(TrackController trackController) {
+        this.trackController = trackController;
+    }
 
     @GetMapping("/")
     public String home() {
@@ -39,12 +42,10 @@ public class HomeController {
 
     @GetMapping("/add-track")
     public String showAddTrackForm(Model model, HttpServletRequest request) {
-        // Fetch all tracks
         ResponseEntity<PagedModel<EntityModel<TrackDTO>>> response = trackController.getAllTracks(0, Integer.MAX_VALUE);
         if (response.getStatusCode().is2xxSuccessful()) {
             PagedModel<EntityModel<TrackDTO>> tracks = response.getBody();
             if (tracks != null && !tracks.getContent().isEmpty()) {
-                // Find the track with the highest ID
                 TrackDTO lastTrack = tracks.getContent().stream()
                         .map(EntityModel::getContent)
                         .max(Comparator.comparingInt(TrackDTO::getId))

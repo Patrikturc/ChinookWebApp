@@ -119,7 +119,7 @@
 
 <script>
     function confirmDelete(event) {
-        event.preventDefault();  // Prevent default link behavior
+        event.preventDefault();
         const id = event.target.getAttribute('data-id');
         const name = event.target.getAttribute('data-name');
 
@@ -130,13 +130,13 @@
                 if (response.ok) {
                     showNotification('Track "' + name + '" was successfully deleted.');
                     setTimeout(() => {
-                        window.location.reload();  // Reload the page to reflect changes
+                        window.location.reload();
                     }, 2000);
                 } else {
                     alert('Failed to delete the track.');
                 }
             }).catch(error => {
-                console.error('Error:', error);  // Log any fetch errors
+                console.error('Error:', error);
                 alert('Failed to delete the track.');
             });
         }

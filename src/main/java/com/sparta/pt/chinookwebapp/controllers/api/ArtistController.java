@@ -1,13 +1,16 @@
 package com.sparta.pt.chinookwebapp.controllers.api;
 
+import com.sparta.pt.chinookwebapp.dtos.ArtistDTO;
 import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.services.ArtistService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/artists")
@@ -29,6 +32,20 @@ public class ArtistController {
     public ResponseEntity<Artist> getArtistById(@PathVariable Integer id) {
         Optional<Artist> artist = artistService.getArtistById(id);
         return artist.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/name/{artistName}")
+    public ResponseEntity<List<EntityModel<ArtistDTO>>> getArtistByName(@PathVariable String artistName) {
+        List<Artist> artists = artistService.getArtistByName(artistName);
+        if (!artists.isEmpty()) {
+            List<EntityModel<ArtistDTO>> artistDTOs = artists.stream()
+                    .map(artist -> new ArtistDTO(artist.getId(), artist.getName()))
+                    .map(EntityModel::of)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(artistDTOs);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping

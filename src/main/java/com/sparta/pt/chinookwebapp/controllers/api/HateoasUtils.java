@@ -9,6 +9,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -39,11 +40,20 @@ public class HateoasUtils<T> {
         PagedModel<EntityModel<T>> pagedModel = pagedResourcesAssembler.toModel(page,
                 entity -> {
                     Object id = idExtractor.apply(entity);
-                    WebMvcLinkBuilder linkBuilder = linkBuilderFactory.linkTo(controllerClass);
-                    linkBuilder = linkBuilderFunction.apply(entity, linkBuilder);
-                    return EntityModel.of(entity, linkBuilder.withSelfRel());
+                    WebMvcLinkBuilder selfLinkBuilder = linkBuilderFactory.linkTo(controllerClass).slash(id);
+                    WebMvcLinkBuilder customLinkBuilder = linkBuilderFunction.apply(entity, selfLinkBuilder);
+                    return EntityModel.of(entity, selfLinkBuilder.withSelfRel(), customLinkBuilder.withRel("custom-rel"));
                 });
 
         return ResponseEntity.ok(pagedModel);
     }
+
+    public ResponseEntity<EntityModel<T>> createEntityResponse(T entity, Class<?> controllerClass, Function<T, Object> idExtractor, BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder> linkBuilderFunction) {
+        Object id = idExtractor.apply(entity);
+        WebMvcLinkBuilder selfLinkBuilder = linkBuilderFactory.linkTo(controllerClass).slash(id);
+        WebMvcLinkBuilder customLinkBuilder = linkBuilderFunction.apply(entity, selfLinkBuilder);
+        EntityModel<T> entityModel = EntityModel.of(entity, selfLinkBuilder.withSelfRel(), customLinkBuilder.withRel("custom-rel"));
+        return ResponseEntity.ok(entityModel);
+    }
+
 }

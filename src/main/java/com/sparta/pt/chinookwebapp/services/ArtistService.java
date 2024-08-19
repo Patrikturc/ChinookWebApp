@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ArtistService {
@@ -27,10 +28,11 @@ public class ArtistService {
         return artistRepository.findById(id);
     }
 
-    public Optional<Artist> getArtistByName(String artistName) {
+    public List<Artist> getArtistByName(String artistName) {
+        String normalizedArtistName = artistName.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
         return artistRepository.findAll().stream()
-                .filter(artist -> artist.getName().equalsIgnoreCase(artistName))
-                .findFirst();
+                .filter(artist -> artist.getName().replaceAll("[^a-zA-Z0-9]", "").toLowerCase().contains(normalizedArtistName))
+                .collect(Collectors.toList());
     }
 
     public Artist createArtist(Artist artist) {

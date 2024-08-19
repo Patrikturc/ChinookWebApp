@@ -1,5 +1,10 @@
 package com.sparta.pt.chinookwebapp.dtos;
 
+import com.sparta.pt.chinookwebapp.controllers.api.AlbumController;
+import com.sparta.pt.chinookwebapp.controllers.api.ArtistController;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+
 public class AlbumDTO {
     private Integer id;
     private String title;

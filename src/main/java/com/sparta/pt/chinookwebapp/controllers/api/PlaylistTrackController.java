@@ -15,9 +15,9 @@ import java.util.Optional;
 @RequestMapping("/api/playlisttracks")
 public class PlaylistTrackController {
 
-    private PlaylistTrackService playlistTrackService;
+    private final PlaylistTrackService playlistTrackService;
 
-    private HateoasUtils<PlaylistTrackDTO> hateoasUtils;
+    private final HateoasUtils<PlaylistTrackDTO> hateoasUtils;
 
     public PlaylistTrackController(PlaylistTrackService playlistTrackService, HateoasUtils<PlaylistTrackDTO> hateoasUtils) {
         this.playlistTrackService = playlistTrackService;

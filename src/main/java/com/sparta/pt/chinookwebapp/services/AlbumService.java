@@ -35,6 +35,17 @@ public class AlbumService {
                 .map(album -> new AlbumDTO(album.getId(), album.getTitle(), album.getArtist().getName()));
     }
 
+    public List<AlbumDTO> getAlbumsByArtistName(String artistName) {
+        Optional<Artist> artistOptional = artistService.getArtistByName(artistName);
+        if (artistOptional.isPresent()) {
+            return albumRepository.findByArtist(artistOptional.get()).stream()
+                    .map(album -> new AlbumDTO(album.getId(), album.getTitle(), album.getArtist().getName()))
+                    .collect(Collectors.toList());
+        } else {
+            throw new IllegalArgumentException("Artist not found: " + artistName);
+        }
+    }
+
     public Album createAlbum(Album album, String artistName) {
         Optional<Artist> artistOptional = artistService.getArtistByName(artistName);
 

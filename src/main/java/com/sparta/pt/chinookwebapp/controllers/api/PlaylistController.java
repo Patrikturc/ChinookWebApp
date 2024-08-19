@@ -19,7 +19,7 @@ public class PlaylistController {
 
     @GetMapping
     public ResponseEntity<Page<PlaylistDTO>> getAllPlaylists(@RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "10") int size) {
+                                                             @RequestParam(defaultValue = "100") int size) {
         Page<PlaylistDTO> playlists = playlistService.getAllPlaylists(page, size);
         return ResponseEntity.ok(playlists);
     }

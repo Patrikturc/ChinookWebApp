@@ -18,6 +18,10 @@ public class PlaylistService {
     @Autowired
     private PlaylistRepository playlistRepository;
 
+    public PlaylistService(PlaylistRepository playlistRepository) {
+        this.playlistRepository = playlistRepository;
+    }
+
     public Page<PlaylistDTO> getAllPlaylists(int page, int size) {
         Page<Playlist> playlists = playlistRepository.findAll(PageRequest.of(page, size));
         return playlists.map(this::convertToDTO);

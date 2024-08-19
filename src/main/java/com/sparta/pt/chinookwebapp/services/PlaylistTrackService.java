@@ -55,6 +55,12 @@ public class PlaylistTrackService {
         return playlistTracks.map(this::convertToDTO);
     }
 
+    public Page<PlaylistTrackDTO> getTracksByPlaylistId(Integer playlistId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Playlisttrack> playlistTracks = playlisttrackRepository.findByPlaylistId(playlistId, pageable);
+        return playlistTracks.map(this::convertToDTO);
+    }
+
     public PlaylistTrackDTO createPlaylistTrack(PlaylistTrackDTO playlistTrackDTO) {
         Playlisttrack playlistTrack = convertToEntity(playlistTrackDTO);
         Playlisttrack savedPlaylistTrack = playlisttrackRepository.save(playlistTrack);

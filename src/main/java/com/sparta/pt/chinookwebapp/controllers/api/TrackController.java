@@ -5,10 +5,8 @@ import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
 import com.sparta.pt.chinookwebapp.services.TrackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,12 +17,12 @@ import java.util.Optional;
 public class TrackController {
 
     private final TrackService trackService;
-    private final PaginationUtils<TrackDTO> paginationUtils;
+    private final HateoasUtils<TrackDTO> hateoasUtils;
 
     @Autowired
-    public TrackController(TrackService trackService, PaginationUtils<TrackDTO> paginationUtils) {
+    public TrackController(TrackService trackService, HateoasUtils<TrackDTO> hateoasUtils) {
         this.trackService = trackService;
-        this.paginationUtils = paginationUtils;
+        this.hateoasUtils = hateoasUtils;
     }
 
     @GetMapping("/albums/{albumTitle}")
@@ -34,7 +32,7 @@ public class TrackController {
             @RequestParam(defaultValue = "100") int size) {
 
         Page<TrackDTO> tracksPage = trackService.getTracksByAlbumTitle(albumTitle, page, size);
-        return paginationUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
+        return hateoasUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
     }
 
     @GetMapping
@@ -43,7 +41,7 @@ public class TrackController {
             @RequestParam(defaultValue = "100") int size) {
 
         Page<TrackDTO> tracksPage = trackService.getAllTracks(page, size);
-        return paginationUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
+        return hateoasUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
     }
 
     @GetMapping("/{id}")
@@ -59,7 +57,7 @@ public class TrackController {
             @RequestParam(defaultValue = "100") int size) {
 
         Page<TrackDTO> tracksPage = trackService.getTracksByGenreName(genreName, page, size);
-        return paginationUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
+        return hateoasUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
     }
 
     @PostMapping

@@ -2,47 +2,61 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 
 import com.sparta.pt.chinookwebapp.dtos.PlaylistTrackDTO;
 import com.sparta.pt.chinookwebapp.services.PlaylistTrackService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/playlisttracks")
 public class PlaylistTrackController {
 
-    @Autowired
     private PlaylistTrackService playlistTrackService;
 
-    @GetMapping
-    public ResponseEntity<Page<PlaylistTrackDTO>> getAllPlaylistTracks(@RequestParam(defaultValue = "0") int page,
-                                                                       @RequestParam(defaultValue = "100") int size) {
-        Page<PlaylistTrackDTO> playlistTracks = playlistTrackService.getAllPlaylistTracks(page, size);
-        return ResponseEntity.ok(playlistTracks);
+    private HateoasUtils<PlaylistTrackDTO> hateoasUtils;
+
+    public PlaylistTrackController(PlaylistTrackService playlistTrackService, HateoasUtils<PlaylistTrackDTO> hateoasUtils) {
+        this.playlistTrackService = playlistTrackService;
+        this.hateoasUtils = hateoasUtils;
     }
 
-    @GetMapping("/{playlistName}/{trackName}")
-    public ResponseEntity<PlaylistTrackDTO> getPlaylistTrackById(@PathVariable String playlistName, @PathVariable String trackName) {
-        Optional<PlaylistTrackDTO> playlistTrack = playlistTrackService.getPlaylistTrackById(playlistName, trackName);
-        return playlistTrack.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping
+    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getAllPlaylistTracks(@RequestParam(defaultValue = "0") int page,
+                                                                                          @RequestParam(defaultValue = "100") int size) {
+        Page<PlaylistTrackDTO> playlistTracks = playlistTrackService.getAllPlaylistTracks(page, size);
+        return hateoasUtils.createPagedResponse(playlistTracks, PlaylistTrackController.class, PlaylistTrackDTO::getPlaylistId);
     }
 
     @GetMapping("/{playlistName}")
-    public ResponseEntity<Page<PlaylistTrackDTO>> getTracksByPlaylistName(@PathVariable String playlistName,
-                                                                          @RequestParam(defaultValue = "0") int page,
-                                                                          @RequestParam(defaultValue = "100") int size) {
+    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getTracksByPlaylistName(@PathVariable String playlistName,
+                                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                                             @RequestParam(defaultValue = "100") int size) {
         Page<PlaylistTrackDTO> tracks = playlistTrackService.getTracksByPlaylistName(playlistName, page, size);
-        return ResponseEntity.ok(tracks);
+        return hateoasUtils.createPagedResponse(tracks, PlaylistTrackController.class, PlaylistTrackDTO::getPlaylistId);
+    }
+
+    @GetMapping("/tracks/{playlistId}")
+    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getTracksByPlaylistId(@PathVariable Integer playlistId,
+                                                                                           @RequestParam(defaultValue = "0") int page,
+                                                                                           @RequestParam(defaultValue = "100") int size) {
+        Page<PlaylistTrackDTO> tracks = playlistTrackService.getTracksByPlaylistId(playlistId, page, size);
+        return hateoasUtils.createPagedResponseWithCustomLinks(tracks, TrackController.class, PlaylistTrackDTO::getTrackId, (entity, linkBuilder) -> linkBuilder.slash(entity.getTrackId()));
     }
 
     @PostMapping
     public ResponseEntity<PlaylistTrackDTO> createPlaylistTrack(@RequestBody PlaylistTrackDTO playlistTrackDTO) {
         PlaylistTrackDTO createdPlaylistTrack = playlistTrackService.createPlaylistTrack(playlistTrackDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPlaylistTrack);
+    }
+
+    @GetMapping("/{playlistName}/{trackName}")
+    public ResponseEntity<PlaylistTrackDTO> getPlaylistTrackById(@PathVariable String playlistName, @PathVariable String trackName) {
+        Optional<PlaylistTrackDTO> playlistTrack = playlistTrackService.getPlaylistTrackById(playlistName, trackName);
+        return playlistTrack.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{playlistName}/{trackName}")

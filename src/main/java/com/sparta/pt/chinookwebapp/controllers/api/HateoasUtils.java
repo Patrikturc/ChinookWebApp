@@ -9,16 +9,17 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Component
-public class PaginationUtils<T> {
+public class HateoasUtils<T> {
 
     private final PagedResourcesAssembler<T> pagedResourcesAssembler;
     private final WebMvcLinkBuilderFactory linkBuilderFactory;
 
-    public PaginationUtils(PagedResourcesAssembler<T> pagedResourcesAssembler,
-                           WebMvcLinkBuilderFactory linkBuilderFactory) {
+    public HateoasUtils(PagedResourcesAssembler<T> pagedResourcesAssembler,
+                        WebMvcLinkBuilderFactory linkBuilderFactory) {
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.linkBuilderFactory = linkBuilderFactory;
     }
@@ -28,6 +29,18 @@ public class PaginationUtils<T> {
                 entity -> {
                     Object id = idExtractor.apply(entity);
                     WebMvcLinkBuilder linkBuilder = linkBuilderFactory.linkTo(controllerClass).slash(id);
+                    return EntityModel.of(entity, linkBuilder.withSelfRel());
+                });
+
+        return ResponseEntity.ok(pagedModel);
+    }
+
+    public ResponseEntity<PagedModel<EntityModel<T>>> createPagedResponseWithCustomLinks(Page<T> page, Class<?> controllerClass, Function<T, Object> idExtractor, BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder> linkBuilderFunction) {
+        PagedModel<EntityModel<T>> pagedModel = pagedResourcesAssembler.toModel(page,
+                entity -> {
+                    Object id = idExtractor.apply(entity);
+                    WebMvcLinkBuilder linkBuilder = linkBuilderFactory.linkTo(controllerClass);
+                    linkBuilder = linkBuilderFunction.apply(entity, linkBuilder);
                     return EntityModel.of(entity, linkBuilder.withSelfRel());
                 });
 

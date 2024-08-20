@@ -1,4 +1,4 @@
-package com.sparta.pt.chinookwebapp.controllers.api;
+package com.sparta.pt.chinookwebapp.utils;
 
 import org.springframework.data.domain.Page;
 import org.springframework.hateoas.EntityModel;
@@ -9,7 +9,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -36,23 +36,29 @@ public class HateoasUtils<T> {
         return ResponseEntity.ok(pagedModel);
     }
 
-    public ResponseEntity<PagedModel<EntityModel<T>>> createPagedResponseWithCustomLinks(Page<T> page, Class<?> controllerClass, Function<T, Object> idExtractor, BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder> linkBuilderFunction) {
+    public ResponseEntity<PagedModel<EntityModel<T>>> createPagedResponseWithCustomLinks(Page<T> page, Class<?> controllerClass, Function<T, Object> idExtractor, Optional<BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder>> linkBuilderFunction, String customRel) {
         PagedModel<EntityModel<T>> pagedModel = pagedResourcesAssembler.toModel(page,
                 entity -> {
                     Object id = idExtractor.apply(entity);
                     WebMvcLinkBuilder selfLinkBuilder = linkBuilderFactory.linkTo(controllerClass).slash(id);
-                    WebMvcLinkBuilder customLinkBuilder = linkBuilderFunction.apply(entity, selfLinkBuilder);
-                    return EntityModel.of(entity, selfLinkBuilder.withSelfRel(), customLinkBuilder.withRel("custom-rel"));
+                    EntityModel<T> entityModel = EntityModel.of(entity, selfLinkBuilder.withSelfRel());
+
+                    linkBuilderFunction.ifPresent(function -> {
+                        WebMvcLinkBuilder customLinkBuilder = function.apply(entity, selfLinkBuilder);
+                        entityModel.add(customLinkBuilder.withRel(customRel));
+                    });
+
+                    return entityModel;
                 });
 
         return ResponseEntity.ok(pagedModel);
     }
 
-    public ResponseEntity<EntityModel<T>> createEntityResponse(T entity, Class<?> controllerClass, Function<T, Object> idExtractor, BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder> linkBuilderFunction) {
+    public ResponseEntity<EntityModel<T>> createEntityResponse(T entity, Class<?> controllerClass, Function<T, Object> idExtractor, BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder> linkBuilderFunction, String customRel) {
         Object id = idExtractor.apply(entity);
         WebMvcLinkBuilder selfLinkBuilder = linkBuilderFactory.linkTo(controllerClass).slash(id);
         WebMvcLinkBuilder customLinkBuilder = linkBuilderFunction.apply(entity, selfLinkBuilder);
-        EntityModel<T> entityModel = EntityModel.of(entity, selfLinkBuilder.withSelfRel(), customLinkBuilder.withRel("custom-rel"));
+        EntityModel<T> entityModel = EntityModel.of(entity, selfLinkBuilder.withSelfRel(), customLinkBuilder.withRel(customRel));
         return ResponseEntity.ok(entityModel);
     }
 

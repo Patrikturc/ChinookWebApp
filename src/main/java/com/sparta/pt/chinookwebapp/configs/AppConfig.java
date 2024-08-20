@@ -1,6 +1,6 @@
 package com.sparta.pt.chinookwebapp.configs;
 
-import com.sparta.pt.chinookwebapp.controllers.api.HateoasUtils;
+import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

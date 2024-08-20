@@ -63,9 +63,9 @@ public class HomeController {
 
     @GetMapping("/update-track/{id}")
     public String showUpdateTrackForm(@PathVariable int id, Model model, HttpServletRequest request) {
-        ResponseEntity<TrackDTO> response = trackController.getTrackById(id);
+        ResponseEntity<EntityModel<TrackDTO>> response = trackController.getTrackById(id);
         if (response.getStatusCode().is2xxSuccessful()) {
-            TrackDTO track = response.getBody();
+            TrackDTO track = response.getBody().getContent();
             model.addAttribute("track", track);
         } else {
             model.addAttribute("error", "Track not found");
@@ -88,7 +88,7 @@ public class HomeController {
 
     @DeleteMapping("/delete-track/{id}")
     public ResponseEntity<String> deleteTrack(@PathVariable int id) {
-        ResponseEntity<TrackDTO> response = trackController.getTrackById(id);
+        ResponseEntity<EntityModel<TrackDTO>> response = trackController.getTrackById(id);
         if (response.getStatusCode().is2xxSuccessful()) {
             trackController.deleteTrack(id);
             return ResponseEntity.ok("Track deleted successfully");

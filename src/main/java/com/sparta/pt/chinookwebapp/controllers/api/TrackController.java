@@ -1,87 +1,64 @@
-// TrackController.java
 package com.sparta.pt.chinookwebapp.controllers.api;
 
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
 import com.sparta.pt.chinookwebapp.services.TrackService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-
 @RestController
-@RequestMapping("api/tracks")
+@RequestMapping("/api/tracks")
 public class TrackController {
 
     private final TrackService trackService;
-    private final HateoasUtils<TrackDTO> hateoasUtils;
 
     @Autowired
-    public TrackController(TrackService trackService, HateoasUtils<TrackDTO> hateoasUtils) {
+    public TrackController(TrackService trackService) {
         this.trackService = trackService;
-        this.hateoasUtils = hateoasUtils;
-    }
-
-    @GetMapping("/albums/{albumTitle}")
-    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByAlbumTitle(
-            @PathVariable String albumTitle,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "100") int size) {
-
-        Page<TrackDTO> tracksPage = trackService.getTracksByAlbumTitle(albumTitle, page, size);
-        return hateoasUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
     }
 
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getAllTracks(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
-
-        Page<TrackDTO> tracksPage = trackService.getAllTracks(page, size);
-        return hateoasUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
+        return trackService.getAllTracks(page, size);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TrackDTO> getTrackById(@PathVariable int id) {
-        Optional<TrackDTO> trackDTO = trackService.getTrackById(id);
-        return trackDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<TrackDTO>> getTrackById(@PathVariable int id) {
+        return trackService.getTrackById(id);
     }
 
-    @GetMapping("/genres/{genreName}")
+    @GetMapping("/genre/{genreName}")
     public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByGenreName(
             @PathVariable String genreName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
+        return trackService.getTracksByGenreName(genreName, page, size);
+    }
 
-        Page<TrackDTO> tracksPage = trackService.getTracksByGenreName(genreName, page, size);
-        return hateoasUtils.createPagedResponse(tracksPage, TrackController.class, TrackDTO::getId);
+    @GetMapping("/album/{albumTitle}")
+    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByAlbumTitle(
+            @PathVariable String albumTitle,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return trackService.getTracksByAlbumTitle(albumTitle, page, size);
     }
 
     @PostMapping
-    public TrackDTO createTrack(@RequestBody TrackDTO trackDTO) {
+    public ResponseEntity<EntityModel<TrackDTO>> createTrack(@RequestBody TrackDTO trackDTO) {
         return trackService.createTrack(trackDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TrackDTO> upsertTrack(@PathVariable int id, @RequestBody TrackDTO trackDTO) {
-        TrackDTO upsertedTrack = trackService.upsertTrack(id, trackDTO);
-        return ResponseEntity.ok(upsertedTrack);
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<TrackDTO> updateTrack(@PathVariable int id, @RequestBody TrackDTO trackDTO) {
-        Optional<TrackDTO> updatedTrack = trackService.updateTrack(id, trackDTO);
-        return updatedTrack.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<TrackDTO>> updateTrack(@PathVariable int id, @RequestBody TrackDTO trackDTO) {
+        return trackService.updateTrack(id, trackDTO);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTrack(@PathVariable int id) {
-        if (trackService.deleteTrack(id)) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        return trackService.deleteTrack(id);
     }
 }

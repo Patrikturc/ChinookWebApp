@@ -31,6 +31,11 @@ public class AlbumController {
         return albumService.getAlbumById(id);
     }
 
+    @GetMapping("/title/{title}")
+    public ResponseEntity<EntityModel<AlbumDTO>> getAlbumByTitle(@PathVariable String title) {
+        return albumService.getAlbumByTitle(title);
+    }
+
     @GetMapping("/artists/{artistName}")
     public ResponseEntity<PagedModel<EntityModel<AlbumDTO>>> getAlbumsByArtistName(
             @PathVariable String artistName,

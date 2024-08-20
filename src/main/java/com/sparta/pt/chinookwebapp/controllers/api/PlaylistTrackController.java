@@ -2,6 +2,7 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 
 import com.sparta.pt.chinookwebapp.dtos.PlaylistTrackDTO;
 import com.sparta.pt.chinookwebapp.services.PlaylistTrackService;
+import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -40,11 +41,12 @@ public class PlaylistTrackController {
     }
 
     @GetMapping("/tracks/{playlistId}")
-    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getTracksByPlaylistId(@PathVariable Integer playlistId,
-                                                                                           @RequestParam(defaultValue = "0") int page,
-                                                                                           @RequestParam(defaultValue = "100") int size) {
+    public ResponseEntity<Page<PlaylistTrackDTO>> getTracksByPlaylistId(
+            @PathVariable Integer playlistId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
         Page<PlaylistTrackDTO> tracks = playlistTrackService.getTracksByPlaylistId(playlistId, page, size);
-        return hateoasUtils.createPagedResponseWithCustomLinks(tracks, TrackController.class, PlaylistTrackDTO::getTrackId, (entity, linkBuilder) -> linkBuilder.slash(entity.getTrackId()));
+        return ResponseEntity.ok(tracks);
     }
 
     @PostMapping

@@ -1,149 +1,72 @@
-// TrackService.java
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.controllers.api.AlbumController;
+import com.sparta.pt.chinookwebapp.controllers.api.GenreController;
+import com.sparta.pt.chinookwebapp.controllers.api.TrackController;
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
-import com.sparta.pt.chinookwebapp.models.Album;
-import com.sparta.pt.chinookwebapp.models.Genre;
-import com.sparta.pt.chinookwebapp.models.Mediatype;
-import com.sparta.pt.chinookwebapp.models.Mediatype;
 import com.sparta.pt.chinookwebapp.models.Track;
-import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
-import com.sparta.pt.chinookwebapp.repositories.GenreRepository;
 import com.sparta.pt.chinookwebapp.repositories.MediatypeRepository;
 import com.sparta.pt.chinookwebapp.repositories.TrackRepository;
+import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilderFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
-public class TrackService {
+public class TrackService extends BaseService<Track, TrackDTO, TrackRepository> {
 
     private final TrackRepository trackRepository;
-    private final AlbumRepository albumRepository;
     private final MediatypeRepository mediaTypeRepository;
-    private final GenreRepository genreRepository;
 
     @Autowired
-    public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository, MediatypeRepository mediaTypeRepository, GenreRepository genreRepository) {
+    public TrackService(TrackRepository trackRepository, HateoasUtils<TrackDTO> hateoasUtils, WebMvcLinkBuilderFactory linkBuilderFactory, MediatypeRepository mediaTypeRepository) {
+        super(trackRepository, hateoasUtils, linkBuilderFactory);
         this.trackRepository = trackRepository;
-        this.albumRepository = albumRepository;
         this.mediaTypeRepository = mediaTypeRepository;
-        this.genreRepository = genreRepository;
     }
 
-    public Page<TrackDTO> getAllTracks(int page, int size) {
+    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getAllTracks(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Track> tracks = trackRepository.findAll(pageable);
-        return tracks.map(this::convertToDTO);
+        return getAll(pageable, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
     }
 
-    public Page<TrackDTO> getTracksByGenreName(String genreName, int page, int size) {
+    public ResponseEntity<EntityModel<TrackDTO>> getTrackById(int id) {
+        return getById(id, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
+    }
+
+    public ResponseEntity<EntityModel<TrackDTO>> createTrack(TrackDTO trackDTO) {
+        Track track = convertToEntity(trackDTO);
+        return create(track, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
+    }
+
+    public ResponseEntity<EntityModel<TrackDTO>> updateTrack(int id, TrackDTO trackDTO) {
+        Track trackDetails = convertToEntity(trackDTO);
+        return update(id, trackDetails, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
+    }
+
+    public ResponseEntity<Void> deleteTrack(int id) {
+        return delete(id);
+    }
+
+    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByGenreName(String genreName, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Track> tracks = trackRepository.findByGenreNameContainingIgnoreCase(genreName, pageable);
-        return tracks.map(this::convertToDTO);
+        return getPagedModelResponseEntity(tracks);
     }
 
-    public Page<TrackDTO> getTracksByAlbumTitle(String albumTitle, int page, int size) {
+    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByAlbumTitle(String albumTitle, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Track> tracks = trackRepository.findByAlbumTitleContainingIgnoreCase(albumTitle, pageable);
-        return tracks.map(this::convertToDTO);
-    }
-
-    public Optional<TrackDTO> getTrackById(int id) {
-        return trackRepository.findById(id).map(this::convertToDTO);
-    }
-
-    public TrackDTO createTrack(TrackDTO trackDTO) {
-        Track track = convertToEntity(trackDTO);
-
-        int maxId = trackRepository.findAll().stream()
-                .max(Comparator.comparingInt(Track::getId))
-                .map(Track::getId)
-                .orElse(0);
-        track.setId(maxId + 1);
-
-        setAlbumByTitle(track, trackDTO.getAlbumTitle());
-        setMediaTypeByName(track, trackDTO.getMediaTypeName());
-        setGenreByName(track, trackDTO.getGenreName());
-
-        Track savedTrack = trackRepository.save(track);
-        return convertToDTO(savedTrack);
-    }
-
-    public Optional<TrackDTO> updateTrack(int id, TrackDTO trackDTO) {
-        return trackRepository.findById(id).map(existingTrack -> {
-            if (trackDTO.getName() != null) existingTrack.setName(trackDTO.getName());
-            if (trackDTO.getComposer() != null) existingTrack.setComposer(trackDTO.getComposer());
-            if (trackDTO.getMilliseconds() != null) existingTrack.setMilliseconds(trackDTO.getMilliseconds());
-            if (trackDTO.getBytes() != null) existingTrack.setBytes(trackDTO.getBytes());
-            if (trackDTO.getUnitPrice() != null) existingTrack.setUnitPrice(trackDTO.getUnitPrice());
-
-            setAlbumByTitle(existingTrack, trackDTO.getAlbumTitle());
-            setMediaTypeByName(existingTrack, trackDTO.getMediaTypeName());
-            setGenreByName(existingTrack, trackDTO.getGenreName());
-
-            Track updatedTrack = trackRepository.save(existingTrack);
-            return convertToDTO(updatedTrack);
-        });
-    }
-
-    public TrackDTO upsertTrack(int id, TrackDTO trackDTO) {
-        Track track = convertToEntity(trackDTO);
-        track.setId(id);
-
-        setAlbumByTitle(track, trackDTO.getAlbumTitle());
-        setMediaTypeByName(track, trackDTO.getMediaTypeName());
-        setGenreByName(track, trackDTO.getGenreName());
-
-        if (!trackRepository.existsById(id)) {
-            Track savedTrack = trackRepository.save(track);
-            return convertToDTO(savedTrack);
-        }
-
-        updateTrack(id, trackDTO);
-        return convertToDTO(track);
-    }
-
-    public boolean deleteTrack(int id) {
-        if (trackRepository.existsById(id)) {
-            trackRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-
-    private void setAlbumByTitle(Track track, String albumTitle) {
-        if (albumTitle != null && !albumTitle.isEmpty()) {
-            Optional<Album> album = albumRepository.findAll().stream()
-                    .filter(a -> a.getTitle().equalsIgnoreCase(albumTitle))
-                    .findFirst();
-            album.ifPresent(track::setAlbum);
-        }
-    }
-
-    private void setMediaTypeByName(Track track, String mediaTypeName) {
-        if (mediaTypeName != null && !mediaTypeName.isEmpty()) {
-            Optional<Mediatype> mediaType = mediaTypeRepository.findAll().stream()
-                    .filter(mt -> mt.getName().equalsIgnoreCase(mediaTypeName))
-                    .findFirst();
-            mediaType.ifPresent(track::setMediaType);
-        }
-    }
-
-    private void setGenreByName(Track track, String genreName) {
-        if (genreName != null && !genreName.isEmpty()) {
-            Optional<Genre> genre = genreRepository.findAll().stream()
-                    .filter(g -> g.getName().equalsIgnoreCase(genreName))
-                    .findFirst();
-            genre.ifPresent(track::setGenre);
-        }
+        return getPagedModelResponseEntity(tracks);
     }
 
     private TrackDTO convertToDTO(Track track) {
@@ -168,6 +91,34 @@ public class TrackService {
         track.setMilliseconds(trackDTO.getMilliseconds());
         track.setBytes(trackDTO.getBytes());
         track.setUnitPrice(trackDTO.getUnitPrice());
+        if (trackDTO.getMediaTypeName() != null) {
+            track.setMediaType(mediaTypeRepository.findByName(trackDTO.getMediaTypeName()).orElse(null));
+        }
         return track;
+    }
+
+    @Override
+    protected void updateEntity(Track existingTrack, Track trackDetails) {
+        if (trackDetails.getName() != null) existingTrack.setName(trackDetails.getName());
+        if (trackDetails.getComposer() != null) existingTrack.setComposer(trackDetails.getComposer());
+        if (trackDetails.getMilliseconds() != null) existingTrack.setMilliseconds(trackDetails.getMilliseconds());
+        if (trackDetails.getBytes() != null) existingTrack.setBytes(trackDetails.getBytes());
+        if (trackDetails.getUnitPrice() != null) existingTrack.setUnitPrice(trackDetails.getUnitPrice());
+    }
+
+    private WebMvcLinkBuilder addCustomLinks(TrackDTO trackDTO, WebMvcLinkBuilder selfLinkBuilder) {
+        WebMvcLinkBuilder albumLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AlbumController.class).getAlbumByTitle(trackDTO.getAlbumTitle()));
+        WebMvcLinkBuilder genreLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GenreController.class).getGenreByName(trackDTO.getGenreName()));
+        trackDTO.add(albumLink.withRel("album"));
+        trackDTO.add(genreLink.withRel("genre"));
+        return selfLinkBuilder;
+    }
+
+    private ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getPagedModelResponseEntity(Page<Track> tracks) {
+        Page<TrackDTO> trackDTOs = tracks.map(this::convertToDTO);
+        PagedModel<EntityModel<TrackDTO>> pagedModel = hateoasUtils.createPagedResponse(trackDTOs, TrackController.class, TrackDTO::getId).getBody();
+        assert pagedModel != null;
+        pagedModel.getContent().forEach(entityModel -> addCustomLinks(Objects.requireNonNull(entityModel.getContent()), WebMvcLinkBuilder.linkTo(TrackController.class)));
+        return ResponseEntity.ok(pagedModel);
     }
 }

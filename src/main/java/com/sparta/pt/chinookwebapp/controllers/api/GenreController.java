@@ -3,11 +3,10 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 import com.sparta.pt.chinookwebapp.dtos.GenreDTO;
 import com.sparta.pt.chinookwebapp.services.GenreService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/genres")
@@ -21,38 +20,39 @@ public class GenreController {
     }
 
     @GetMapping
-    public List<GenreDTO> getAllGenres() {
-        return genreService.getAllGenres();
+    public ResponseEntity<PagedModel<EntityModel<GenreDTO>>> getAllGenres(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return genreService.getAllGenres(page, size);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GenreDTO> getGenreById(@PathVariable Integer id) {
-        Optional<GenreDTO> genre = genreService.getGenreById(id);
-        return genre.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<GenreDTO>> getGenreById(@PathVariable Integer id) {
+        return genreService.getGenreById(id);
+    }
+
+    @GetMapping("/name/{genreName}")
+    public ResponseEntity<EntityModel<GenreDTO>> getGenreByName(@PathVariable String genreName) {
+        return genreService.getGenreByName(genreName);
     }
 
     @PostMapping
-    public GenreDTO createGenre(@RequestBody GenreDTO genreDTO) {
+    public ResponseEntity<EntityModel<GenreDTO>> createGenre(@RequestBody GenreDTO genreDTO) {
         return genreService.createGenre(genreDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GenreDTO> updateGenre(@PathVariable Integer id, @RequestBody GenreDTO genreDTO) {
-        Optional<GenreDTO> updatedGenre = Optional.ofNullable(genreService.upsertGenre(id, genreDTO));
-        return updatedGenre.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<GenreDTO>> updateGenre(@PathVariable Integer id, @RequestBody GenreDTO genreDTO) {
+        return genreService.updateGenre(id, genreDTO);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<GenreDTO> patchGenre(@PathVariable Integer id, @RequestBody GenreDTO genreDTO) {
-        Optional<GenreDTO> patchedGenreDTO = genreService.patchGenre(id, genreDTO);
-
-        return patchedGenreDTO
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<GenreDTO>> patchGenre(@PathVariable Integer id, @RequestBody GenreDTO genreDTO) {
+        return genreService.patchGenre(id, genreDTO);
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteGenre(@PathVariable Integer id) {
-        boolean isDeleted = genreService.deleteGenre(id);
-        return isDeleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        return genreService.deleteGenre(id);
     }
 }

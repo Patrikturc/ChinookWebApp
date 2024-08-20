@@ -1,7 +1,7 @@
 package com.sparta.pt.chinookwebapp.services;
 
 import com.sparta.pt.chinookwebapp.controllers.api.ArtistController;
-import com.sparta.pt.chinookwebapp.controllers.api.HateoasUtils;
+import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
 import com.sparta.pt.chinookwebapp.dtos.ArtistDTO;
 import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
@@ -60,8 +60,13 @@ public class ArtistService extends BaseService<Artist, ArtistDTO, ArtistReposito
         Page<Artist> artistPage = new PageImpl<>(artists, pageable, artists.size());
         Page<ArtistDTO> artistDTOPage = artistPage.map(this::toDto);
 
-        return hateoasUtils.createPagedResponseWithCustomLinks(artistDTOPage, ArtistController.class, ArtistDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getName()));
+        return hateoasUtils.createPagedResponseWithCustomLinks(
+                artistDTOPage,
+                ArtistController.class,
+                ArtistDTO::getId,
+                Optional.of((dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getName())),
+                "artist"
+        );
     }
 
     public ResponseEntity<EntityModel<ArtistDTO>> createArtist(ArtistDTO artistDTO) {

@@ -1,16 +1,12 @@
 package com.sparta.pt.chinookwebapp.controllers.api;
 
 import com.sparta.pt.chinookwebapp.dtos.ArtistDTO;
-import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.services.ArtistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/artists")
@@ -24,52 +20,42 @@ public class ArtistController {
     }
 
     @GetMapping
-    public List<Artist> getAllArtists() {
-        return artistService.getAllArtists();
+    public ResponseEntity<PagedModel<EntityModel<ArtistDTO>>> getAllArtists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return artistService.getAllArtists(page, size);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Artist> getArtistById(@PathVariable Integer id) {
-        Optional<Artist> artist = artistService.getArtistById(id);
-        return artist.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<ArtistDTO>> getArtistById(@PathVariable Integer id) {
+        return artistService.getArtistById(id);
     }
 
     @GetMapping("/name/{artistName}")
-    public ResponseEntity<List<EntityModel<ArtistDTO>>> getArtistByName(@PathVariable String artistName) {
-        List<Artist> artists = artistService.getArtistByName(artistName);
-        if (!artists.isEmpty()) {
-            List<EntityModel<ArtistDTO>> artistDTOs = artists.stream()
-                    .map(artist -> new ArtistDTO(artist.getId(), artist.getName()))
-                    .map(EntityModel::of)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(artistDTOs);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<PagedModel<EntityModel<ArtistDTO>>> getArtistByName(
+            @PathVariable String artistName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return artistService.getArtistByName(artistName, page, size);
     }
 
     @PostMapping
-    public Artist createArtist(@RequestBody Artist artist) {
-        return artistService.createArtist(artist);
+    public ResponseEntity<EntityModel<ArtistDTO>> createArtist(@RequestBody ArtistDTO artistDTO) {
+        return artistService.createArtist(artistDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Artist> updateArtist(@PathVariable Integer id, @RequestBody Artist artistDetails) {
-        Optional<Artist> updatedArtist = Optional.ofNullable(artistService.upsertArtist(id, artistDetails));
-        return updatedArtist.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<ArtistDTO>> updateArtist(@PathVariable Integer id, @RequestBody ArtistDTO artistDTO) {
+        return artistService.updateArtist(id, artistDTO);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Artist> patchArtist(@PathVariable Integer id, @RequestBody Artist artistDetails) {
-        Optional<Artist> updatedArtist = artistService.patchArtist(id, artistDetails);
-        return updatedArtist
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<ArtistDTO>> patchArtist(@PathVariable Integer id, @RequestBody ArtistDTO artistDTO) {
+        return artistService.patchArtist(id, artistDTO);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteArtist(@PathVariable Integer id) {
-        boolean isDeleted = artistService.deleteArtist(id);
-        return isDeleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+        return artistService.deleteArtist(id);
     }
 }

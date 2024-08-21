@@ -9,8 +9,6 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Component
@@ -36,29 +34,10 @@ public class HateoasUtils<T> {
         return ResponseEntity.ok(pagedModel);
     }
 
-    public ResponseEntity<PagedModel<EntityModel<T>>> createPagedResponseWithCustomLinks(Page<T> page, Class<?> controllerClass, Function<T, Object> idExtractor, Optional<BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder>> linkBuilderFunction, String customRel) {
-        PagedModel<EntityModel<T>> pagedModel = pagedResourcesAssembler.toModel(page,
-                entity -> {
-                    Object id = idExtractor.apply(entity);
-                    WebMvcLinkBuilder selfLinkBuilder = linkBuilderFactory.linkTo(controllerClass).slash(id);
-                    EntityModel<T> entityModel = EntityModel.of(entity, selfLinkBuilder.withSelfRel());
-
-                    linkBuilderFunction.ifPresent(function -> {
-                        WebMvcLinkBuilder customLinkBuilder = function.apply(entity, selfLinkBuilder);
-                        entityModel.add(customLinkBuilder.withRel(customRel));
-                    });
-
-                    return entityModel;
-                });
-
-        return ResponseEntity.ok(pagedModel);
-    }
-
-    public ResponseEntity<EntityModel<T>> createEntityResponse(T entity, Class<?> controllerClass, Function<T, Object> idExtractor, BiFunction<T, WebMvcLinkBuilder, WebMvcLinkBuilder> linkBuilderFunction, String customRel) {
+    public ResponseEntity<EntityModel<T>> createEntityResponse(T entity, Class<?> controllerClass, Function<T, Object> idExtractor) {
         Object id = idExtractor.apply(entity);
         WebMvcLinkBuilder selfLinkBuilder = linkBuilderFactory.linkTo(controllerClass).slash(id);
-        WebMvcLinkBuilder customLinkBuilder = linkBuilderFunction.apply(entity, selfLinkBuilder);
-        EntityModel<T> entityModel = EntityModel.of(entity, selfLinkBuilder.withSelfRel(), customLinkBuilder.withRel(customRel));
+        EntityModel<T> entityModel = EntityModel.of(entity, selfLinkBuilder.withSelfRel());
         return ResponseEntity.ok(entityModel);
     }
 

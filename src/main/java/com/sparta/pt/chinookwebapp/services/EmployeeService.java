@@ -1,99 +1,72 @@
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.controllers.api.EmployeeController;
 import com.sparta.pt.chinookwebapp.dtos.EmployeeDTO;
 import com.sparta.pt.chinookwebapp.exceptions.InvalidInputException;
 import com.sparta.pt.chinookwebapp.models.Employee;
 import com.sparta.pt.chinookwebapp.repositories.EmployeeRepository;
+import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilderFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Optional;
-import java.util.Comparator;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Optional;
 
 @Service
-public class EmployeeService {
+public class EmployeeService extends BaseService<Employee, EmployeeDTO, EmployeeRepository> {
 
     private final EmployeeRepository employeeRepository;
+    private final HateoasUtils<EmployeeDTO> hateoasUtils;
 
     @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository) {
+    public EmployeeService(EmployeeRepository employeeRepository,
+                           HateoasUtils<EmployeeDTO> hateoasUtils,
+                           WebMvcLinkBuilderFactory linkBuilderFactory) {
+        super(employeeRepository, hateoasUtils, linkBuilderFactory);
         this.employeeRepository = employeeRepository;
+        this.hateoasUtils = hateoasUtils;
     }
 
-    public List<EmployeeDTO> getAllEmployees() {
-        return employeeRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public ResponseEntity<PagedModel<EntityModel<EmployeeDTO>>> getAllEmployees(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return getAll(pageable, this::toDto, EmployeeController.class, EmployeeDTO::getId);
     }
 
-    public Optional<EmployeeDTO> getEmployeeById(Integer id) {
-        return employeeRepository.findById(id)
-                .map(this::convertToDTO);
+    public ResponseEntity<EntityModel<EmployeeDTO>> getEmployeeById(Integer id) {
+        return getById(id, this::toDto, EmployeeController.class, EmployeeDTO::getId);
     }
 
-    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
-        try {
-            Employee employee = convertToEntity(employeeDTO);
-            List<Employee> allEmployees = employeeRepository.findAll();
-            int maxId = allEmployees.stream()
-                    .max(Comparator.comparingInt(Employee::getId))
-                    .map(Employee::getId)
-                    .orElse(0);
-
-            employee.setId(maxId + 1);
-
-            setReportsToByName(employee, employeeDTO.getReportsToFullName());
-
-            Employee createdEmployee = employeeRepository.save(employee);
-            return convertToDTO(createdEmployee);
-
-        } catch (IllegalArgumentException e) {
-            throw new InvalidInputException(e.getMessage());
-        }
+    public ResponseEntity<EntityModel<EmployeeDTO>> createEmployee(EmployeeDTO employeeDTO) {
+        Employee employee = convertToEntity(employeeDTO);
+        setReportsToByName(employee, employeeDTO.getReportsToFullName());
+        return create(employee, this::toDto, EmployeeController.class, EmployeeDTO::getId);
     }
 
-    public Optional<EmployeeDTO> updateEmployee(Integer id, EmployeeDTO employeeDTO) {
-        try {
-            return employeeRepository.findById(id)
-                    .map(employee -> {
-                        updateEntityFromDTO(employee, employeeDTO);
-
-                        setReportsToByName(employee, employeeDTO.getReportsToFullName());
-
-                        Employee updatedEmployee = employeeRepository.save(employee);
-                        return convertToDTO(updatedEmployee);
-                    });
-        } catch (IllegalArgumentException e) {
-            throw new InvalidInputException(e.getMessage());
-        }
+    public ResponseEntity<EntityModel<EmployeeDTO>> updateEmployee(Integer id, EmployeeDTO employeeDTO) {
+        Employee updatedEmployee = convertToEntity(employeeDTO);
+        setReportsToByName(updatedEmployee, employeeDTO.getReportsToFullName());
+        return update(id, updatedEmployee, this::toDto, EmployeeController.class, EmployeeDTO::getId);
     }
 
-    public EmployeeDTO upsertEmployee(Integer id, EmployeeDTO employeeDTO) {
-        Optional<Employee> existingEmployee = employeeRepository.findById(id);
-        Employee employee;
+    public ResponseEntity<PagedModel<EntityModel<EmployeeDTO>>> getEmployeesByName(String name, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Employee> employees = employeeRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name, pageable);
+        Page<EmployeeDTO> dtoPage = employees.map(this::toDto);
 
-        if (existingEmployee.isPresent()) {
-            employee = existingEmployee.get();
-            updateEntityFromDTO(employee, employeeDTO);
-        } else {
-            employee = convertToEntity(employeeDTO);
-            employee.setId(id);
-        }
-
-        try {
-            setReportsToByName(employee, employeeDTO.getReportsToFullName());
-        } catch (IllegalArgumentException e) {
-            throw new InvalidInputException(e.getMessage());
-        }
-
-        Employee savedEmployee = employeeRepository.save(employee);
-        return convertToDTO(savedEmployee);
+        return hateoasUtils.createPagedResponse(
+                dtoPage,
+                EmployeeController.class,
+                EmployeeDTO::getId
+        );
     }
 
     private void setReportsToByName(Employee employee, String reportsToFullName) {
@@ -105,33 +78,32 @@ public class EmployeeService {
                 Optional<Employee> reportsToEmployee = employeeRepository.findAll().stream()
                         .filter(e -> e.getFirstName().equalsIgnoreCase(firstName) && e.getLastName().equalsIgnoreCase(lastName))
                         .findFirst();
-
-                if (reportsToEmployee.isPresent()) {
-                    employee.setReportsTo(reportsToEmployee.get());
-                } else {
-                    throw new IllegalArgumentException("Sorry, that employee doesn't exist.");
-                }
+                reportsToEmployee.ifPresent(employee::setReportsTo);
             } else {
-                throw new IllegalArgumentException("Please provide both first and last name.");
+                throw new InvalidInputException("Please provide both first and last name.");
             }
         }
     }
 
-    private void setReportsToById(Employee employee, Integer reportsToId) {
-        if (reportsToId != null) {
-            employeeRepository.findById(reportsToId).ifPresent(employee::setReportsTo);
-        }
+    @Override
+    protected void updateEntity(Employee existingEmployee, Employee employeeDetails) {
+        existingEmployee.setFirstName(employeeDetails.getFirstName());
+        existingEmployee.setLastName(employeeDetails.getLastName());
+        existingEmployee.setTitle(employeeDetails.getTitle());
+        existingEmployee.setBirthDate(employeeDetails.getBirthDate());
+        existingEmployee.setHireDate(employeeDetails.getHireDate());
+        existingEmployee.setAddress(employeeDetails.getAddress());
+        existingEmployee.setCity(employeeDetails.getCity());
+        existingEmployee.setState(employeeDetails.getState());
+        existingEmployee.setCountry(employeeDetails.getCountry());
+        existingEmployee.setPostalCode(employeeDetails.getPostalCode());
+        existingEmployee.setPhone(employeeDetails.getPhone());
+        existingEmployee.setFax(employeeDetails.getFax());
+        existingEmployee.setEmail(employeeDetails.getEmail());
+        existingEmployee.setReportsTo(employeeDetails.getReportsTo());
     }
 
-    public boolean deleteEmployee(Integer id) {
-        if (employeeRepository.existsById(id)) {
-            employeeRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-
-    private EmployeeDTO convertToDTO(Employee employee) {
+    private EmployeeDTO toDto(Employee employee) {
         return new EmployeeDTO(
                 employee.getId(),
                 employee.getFirstName(),
@@ -155,19 +127,11 @@ public class EmployeeService {
     private Employee convertToEntity(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
         setEmployeeWithDto(employee, employeeDTO);
-
         if (employeeDTO.getReportsToId() != null) {
             Optional<Employee> reportsToEmployee = employeeRepository.findById(employeeDTO.getReportsToId());
             reportsToEmployee.ifPresent(employee::setReportsTo);
         }
-
         return employee;
-    }
-
-    private void updateEntityFromDTO(Employee employee, EmployeeDTO employeeDTO) {
-        setEmployeeWithDto(employee, employeeDTO);
-
-        setReportsToById(employee, employeeDTO.getReportsToId());
     }
 
     private void setEmployeeWithDto(Employee employee, EmployeeDTO employeeDTO) {

@@ -30,13 +30,11 @@ public class ArtistService extends BaseService<Artist, ArtistDTO, ArtistReposito
 
     public ResponseEntity<PagedModel<EntityModel<ArtistDTO>>> getAllArtists(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return getAll(pageable, this::toDto, ArtistController.class, ArtistDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getName()));
+        return getAll(pageable, this::toDto, ArtistController.class, ArtistDTO::getId);
     }
 
     public ResponseEntity<EntityModel<ArtistDTO>> getArtistById(Integer id) {
-        return getById(id, this::toDto, ArtistController.class, ArtistDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getName()));
+        return getById(id, this::toDto, ArtistController.class, ArtistDTO::getId);
     }
 
     public List<Artist> getArtistByName(String artistName) {
@@ -60,12 +58,10 @@ public class ArtistService extends BaseService<Artist, ArtistDTO, ArtistReposito
         Page<Artist> artistPage = new PageImpl<>(artists, pageable, artists.size());
         Page<ArtistDTO> artistDTOPage = artistPage.map(this::toDto);
 
-        return hateoasUtils.createPagedResponseWithCustomLinks(
+        return hateoasUtils.createPagedResponse(
                 artistDTOPage,
                 ArtistController.class,
-                ArtistDTO::getId,
-                Optional.of((dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getName())),
-                "artist"
+                ArtistDTO::getId
         );
     }
 
@@ -73,16 +69,14 @@ public class ArtistService extends BaseService<Artist, ArtistDTO, ArtistReposito
         Artist artist = new Artist();
         artist.setName(artistDTO.getName());
 
-        return create(artist, this::toDto, ArtistController.class, ArtistDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getName()));
+        return create(artist, this::toDto, ArtistController.class, ArtistDTO::getId);
     }
 
     public ResponseEntity<EntityModel<ArtistDTO>> updateArtist(Integer id, ArtistDTO artistDTO) {
         Artist artistDetails = new Artist();
         artistDetails.setName(artistDTO.getName());
 
-        return update(id, artistDetails, this::toDto, ArtistController.class, ArtistDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getName()));
+        return update(id, artistDetails, this::toDto, ArtistController.class, ArtistDTO::getId);
     }
 
     public ResponseEntity<EntityModel<ArtistDTO>> patchArtist(Integer id, ArtistDTO artistDTO) {

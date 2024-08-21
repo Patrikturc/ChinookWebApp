@@ -14,7 +14,6 @@ import java.lang.reflect.Field;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public abstract class BaseService<T, D, R extends JpaRepository<T, Integer>> {
@@ -23,54 +22,57 @@ public abstract class BaseService<T, D, R extends JpaRepository<T, Integer>> {
     protected final HateoasUtils<D> hateoasUtils;
     protected final WebMvcLinkBuilderFactory linkBuilderFactory;
 
-    public BaseService(R repository, HateoasUtils<D> hateoasUtils, WebMvcLinkBuilderFactory linkBuilderFactory) {
+    public BaseService(R repository,
+                       HateoasUtils<D> hateoasUtils,
+                       WebMvcLinkBuilderFactory linkBuilderFactory) {
         this.repository = repository;
         this.hateoasUtils = hateoasUtils;
         this.linkBuilderFactory = linkBuilderFactory;
     }
 
-    public ResponseEntity<PagedModel<EntityModel<D>>> getAll(Pageable pageable, Function<T, D> toDto, Class<?> controllerClass, Function<D, Object> idExtractor, BiFunction<D, WebMvcLinkBuilder, WebMvcLinkBuilder> customLinkBuilder) {
+    public ResponseEntity<PagedModel<EntityModel<D>>> getAll(Pageable pageable,
+                                                             Function<T, D> toDto,
+                                                             Class<?> controllerClass,
+                                                             Function<D, Object> idExtractor) {
         Page<T> entities = repository.findAll(pageable);
         Page<D> dtoPage = entities.map(toDto);
-        return hateoasUtils.createPagedResponseWithCustomLinks(
-                dtoPage,
-                controllerClass,
-                idExtractor,
-                Optional.of(customLinkBuilder),
-                "custom"
-        );
+        return hateoasUtils.createPagedResponse(dtoPage, controllerClass, idExtractor);
     }
 
-    public ResponseEntity<EntityModel<D>> getById(Integer id, Function<T, D> toDto, Class<?> controllerClass, Function<D, Object> idExtractor, BiFunction<D, WebMvcLinkBuilder, WebMvcLinkBuilder> customLinkBuilder) {
+    public ResponseEntity<EntityModel<D>> getById(Integer id,
+                                                  Function<T, D> toDto,
+                                                  Class<?> controllerClass,
+                                                  Function<D, Object> idExtractor) {
         return repository.findById(id)
                 .map(entity -> {
                     D dto = toDto.apply(entity);
-                    return hateoasUtils.createEntityResponse(
-                            dto,
-                            controllerClass,
-                            idExtractor,
-                            customLinkBuilder,
-                            "custom"
-                    );
+                    return hateoasUtils.createEntityResponse(dto, controllerClass, idExtractor);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    public ResponseEntity<EntityModel<D>> create(T entity, Function<T, D> toDto, Class<?> controllerClass, Function<D, Object> idExtractor, BiFunction<D, WebMvcLinkBuilder, WebMvcLinkBuilder> customLinkBuilder) {
+    public ResponseEntity<EntityModel<D>> create(T entity,
+                                                 Function<T, D> toDto,
+                                                 Class<?> controllerClass,
+                                                 Function<D, Object> idExtractor) {
         setNextId(entity);
         T savedEntity = repository.save(entity);
         D dto = toDto.apply(savedEntity);
-        return getById((Integer) idExtractor.apply(dto), toDto, controllerClass, idExtractor, customLinkBuilder);
+        return getById((Integer) idExtractor.apply(dto), toDto, controllerClass, idExtractor);
     }
 
-    public ResponseEntity<EntityModel<D>> update(Integer id, T entityDetails, Function<T, D> toDto, Class<?> controllerClass, Function<D, Object> idExtractor, BiFunction<D, WebMvcLinkBuilder, WebMvcLinkBuilder> customLinkBuilder) {
+    public ResponseEntity<EntityModel<D>> update(Integer id,
+                                                 T entityDetails,
+                                                 Function<T, D> toDto,
+                                                 Class<?> controllerClass,
+                                                 Function<D, Object> idExtractor) {
         Optional<T> updatedEntity = repository.findById(id)
                 .map(existingEntity -> {
                     updateEntity(existingEntity, entityDetails);
                     return repository.save(existingEntity);
                 });
 
-        return updatedEntity.map(entity -> getById(id, toDto, controllerClass, idExtractor, customLinkBuilder))
+        return updatedEntity.map(entity -> getById(id, toDto, controllerClass, idExtractor))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -84,7 +86,7 @@ public abstract class BaseService<T, D, R extends JpaRepository<T, Integer>> {
 
     protected abstract void updateEntity(T existingEntity, T entityDetails);
 
-    private void setNextId(T entity) {
+    void setNextId(T entity) {
         List<T> allEntities = repository.findAll();
         int maxId = allEntities.stream()
                 .max(Comparator.comparingInt(e -> (Integer) getId(e)))

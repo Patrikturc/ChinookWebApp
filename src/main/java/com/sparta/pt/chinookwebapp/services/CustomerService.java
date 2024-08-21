@@ -11,15 +11,12 @@ import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilderFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,34 +25,33 @@ public class CustomerService extends BaseService<Customer, CustomerDTO, Customer
     private final EmployeeRepository employeeRepository;
 
     @Autowired
-    public CustomerService(CustomerRepository customerRepository, EmployeeRepository employeeRepository, HateoasUtils<CustomerDTO> hateoasUtils, WebMvcLinkBuilderFactory linkBuilderFactory) {
+    public CustomerService(CustomerRepository customerRepository,
+                           EmployeeRepository employeeRepository,
+                           HateoasUtils<CustomerDTO> hateoasUtils,
+                           WebMvcLinkBuilderFactory linkBuilderFactory) {
         super(customerRepository, hateoasUtils, linkBuilderFactory);
         this.employeeRepository = employeeRepository;
     }
 
     public ResponseEntity<PagedModel<EntityModel<CustomerDTO>>> getAllCustomers(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return getAll(pageable, this::convertToDTO, CustomerController.class, CustomerDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(CustomerController.class).slash("supportRep").slash(dto.getSupportRepName()));
+        return getAll(pageable, this::convertToDTO, CustomerController.class, CustomerDTO::getId);
     }
 
     public ResponseEntity<EntityModel<CustomerDTO>> getCustomerById(Integer id) {
-        return getById(id, this::convertToDTO, CustomerController.class, CustomerDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(CustomerController.class).slash("supportRep").slash(dto.getSupportRepName()));
+        return getById(id, this::convertToDTO, CustomerController.class, CustomerDTO::getId);
     }
 
     public ResponseEntity<EntityModel<CustomerDTO>> createCustomer(CustomerDTO customerDTO) {
         Customer customer = convertToEntity(customerDTO);
         setSupportRepByName(customer, customerDTO.getSupportRepName());
-        return create(customer, this::convertToDTO, CustomerController.class, CustomerDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(CustomerController.class).slash("supportRep").slash(dto.getSupportRepName()));
+        return create(customer, this::convertToDTO, CustomerController.class, CustomerDTO::getId);
     }
 
     public ResponseEntity<EntityModel<CustomerDTO>> updateCustomer(Integer id, CustomerDTO customerDTO) {
         Customer updatedCustomer = convertToEntity(customerDTO);
         setSupportRepByName(updatedCustomer, customerDTO.getSupportRepName());
-        return update(id, updatedCustomer, this::convertToDTO, CustomerController.class, CustomerDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(CustomerController.class).slash("supportRep").slash(dto.getSupportRepName()));
+        return update(id, updatedCustomer, this::convertToDTO, CustomerController.class, CustomerDTO::getId);
     }
 
     private void setSupportRepByName(Customer customer, String supportRepName) {

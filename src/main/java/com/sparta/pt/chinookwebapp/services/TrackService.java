@@ -8,6 +8,7 @@ import com.sparta.pt.chinookwebapp.models.Track;
 import com.sparta.pt.chinookwebapp.repositories.MediatypeRepository;
 import com.sparta.pt.chinookwebapp.repositories.TrackRepository;
 import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
+import org.springdoc.api.OpenApiResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,27 +31,35 @@ public class TrackService extends BaseService<Track, TrackDTO, TrackRepository> 
     @Autowired
     public TrackService(TrackRepository trackRepository, HateoasUtils<TrackDTO> hateoasUtils, WebMvcLinkBuilderFactory linkBuilderFactory, MediatypeRepository mediaTypeRepository) {
         super(trackRepository, hateoasUtils, linkBuilderFactory);
-        this.trackRepository = trackRepository;
         this.mediaTypeRepository = mediaTypeRepository;
+        this.trackRepository = trackRepository;
     }
 
     public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getAllTracks(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return getAll(pageable, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
+        Page<Track> tracks = trackRepository.findAll(pageable);
+        return getPagedModelResponseEntity(tracks);
     }
 
     public ResponseEntity<EntityModel<TrackDTO>> getTrackById(int id) {
-        return getById(id, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
+        Track track = trackRepository.findById(id)
+                .orElseThrow(() -> new OpenApiResourceNotFoundException("Track not found"));
+        TrackDTO trackDTO = convertToDTO(track);
+        EntityModel<TrackDTO> entityModel = EntityModel.of(trackDTO);
+        WebMvcLinkBuilder selfLinkBuilder = WebMvcLinkBuilder.linkTo(TrackController.class).slash(trackDTO.getId());
+        addCustomLinks(trackDTO);
+        entityModel.add(selfLinkBuilder.withSelfRel());
+        return ResponseEntity.ok(entityModel);
     }
 
     public ResponseEntity<EntityModel<TrackDTO>> createTrack(TrackDTO trackDTO) {
         Track track = convertToEntity(trackDTO);
-        return create(track, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
+        return create(track, this::convertToDTO, TrackController.class, TrackDTO::getId);
     }
 
     public ResponseEntity<EntityModel<TrackDTO>> updateTrack(int id, TrackDTO trackDTO) {
         Track trackDetails = convertToEntity(trackDTO);
-        return update(id, trackDetails, this::convertToDTO, TrackController.class, TrackDTO::getId, this::addCustomLinks);
+        return update(id, trackDetails, this::convertToDTO, TrackController.class, TrackDTO::getId);
     }
 
     public ResponseEntity<Void> deleteTrack(int id) {
@@ -106,19 +115,19 @@ public class TrackService extends BaseService<Track, TrackDTO, TrackRepository> 
         if (trackDetails.getUnitPrice() != null) existingTrack.setUnitPrice(trackDetails.getUnitPrice());
     }
 
-    private WebMvcLinkBuilder addCustomLinks(TrackDTO trackDTO, WebMvcLinkBuilder selfLinkBuilder) {
+    private ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getPagedModelResponseEntity(Page<Track> tracks) {
+        Page<TrackDTO> trackDTOs = tracks.map(this::convertToDTO);
+        PagedModel<EntityModel<TrackDTO>> pagedModel = hateoasUtils.createPagedResponse(trackDTOs, TrackController.class, TrackDTO::getId).getBody();
+        if (pagedModel != null) {
+            pagedModel.getContent().forEach(entityModel -> addCustomLinks(entityModel.getContent()));
+        }
+        return ResponseEntity.ok(pagedModel);
+    }
+
+    private void addCustomLinks(TrackDTO trackDTO) {
         WebMvcLinkBuilder albumLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(AlbumController.class).getAlbumByTitle(trackDTO.getAlbumTitle()));
         WebMvcLinkBuilder genreLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(GenreController.class).getGenreByName(trackDTO.getGenreName()));
         trackDTO.add(albumLink.withRel("album"));
         trackDTO.add(genreLink.withRel("genre"));
-        return selfLinkBuilder;
-    }
-
-    private ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getPagedModelResponseEntity(Page<Track> tracks) {
-        Page<TrackDTO> trackDTOs = tracks.map(this::convertToDTO);
-        PagedModel<EntityModel<TrackDTO>> pagedModel = hateoasUtils.createPagedResponse(trackDTOs, TrackController.class, TrackDTO::getId).getBody();
-        assert pagedModel != null;
-        pagedModel.getContent().forEach(entityModel -> addCustomLinks(Objects.requireNonNull(entityModel.getContent()), WebMvcLinkBuilder.linkTo(TrackController.class)));
-        return ResponseEntity.ok(pagedModel);
     }
 }

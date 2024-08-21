@@ -8,14 +8,14 @@ import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilderFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Comparator;
 import java.util.List;
@@ -24,34 +24,29 @@ import java.util.Optional;
 @Service
 public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> {
 
-    private final AlbumRepository albumRepository;
     private final ArtistService artistService;
 
     @Autowired
     public AlbumService(AlbumRepository albumRepository, ArtistService artistService, HateoasUtils<AlbumDTO> hateoasUtils, WebMvcLinkBuilderFactory linkBuilderFactory) {
         super(albumRepository, hateoasUtils, linkBuilderFactory);
         this.artistService = artistService;
-        this.albumRepository = albumRepository;
     }
 
     public ResponseEntity<PagedModel<EntityModel<AlbumDTO>>> getAllAlbums(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return getAll(pageable, this::toDto, AlbumController.class, AlbumDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getArtistName()));
+        return getAll(pageable, this::toDto, AlbumController.class, AlbumDTO::getId);
     }
 
     public ResponseEntity<EntityModel<AlbumDTO>> getAlbumById(Integer id) {
-        return getById(id, this::toDto, AlbumController.class, AlbumDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getArtistName()));
+        return getById(id, this::toDto, AlbumController.class, AlbumDTO::getId);
     }
 
     public ResponseEntity<EntityModel<AlbumDTO>> getAlbumByTitle(String title) {
-        Optional<Album> albumOptional = albumRepository.findByTitle(title);
+        Optional<Album> albumOptional = repository.findByTitle(title);
         if (albumOptional.isPresent()) {
             Album album = albumOptional.get();
             AlbumDTO albumDTO = toDto(album);
-            return hateoasUtils.createEntityResponse(albumDTO, AlbumController.class, AlbumDTO::getId,
-                    (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getArtistName()), "Artist");
+            return hateoasUtils.createEntityResponse(albumDTO, AlbumController.class, AlbumDTO::getId);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -68,12 +63,10 @@ public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> 
         Page<Album> albums = repository.findByArtistIn(artists, pageable);
         Page<AlbumDTO> albumPage = albums.map(this::toDto);
 
-        return hateoasUtils.createPagedResponseWithCustomLinks(
+        return hateoasUtils.createPagedResponse(
                 albumPage,
                 AlbumController.class,
-                AlbumDTO::getId,
-                Optional.of((dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getArtistName())),
-                "artist"
+                AlbumDTO::getId
         );
     }
 
@@ -82,9 +75,8 @@ public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> 
         album.setTitle(albumDTO.getTitle());
         List<Artist> artists = artistService.getArtistByName(albumDTO.getArtistName());
         if (!artists.isEmpty()) {
-            album.setArtist(artists.getFirst());
-            return create(album, this::toDto, AlbumController.class, AlbumDTO::getId,
-                    (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getArtistName()));
+            album.setArtist(artists.get(0));
+            return create(album, this::toDto, AlbumController.class, AlbumDTO::getId);
         } else {
             throw new IllegalArgumentException("Artist not found: " + albumDTO.getArtistName());
         }
@@ -96,9 +88,8 @@ public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> 
         List<Artist> artists = artistService.getArtistByName(albumDTO.getArtistName());
 
         if (!artists.isEmpty()) {
-            albumDetails.setArtist(artists.getFirst());
-            return update(id, albumDetails, this::toDto, AlbumController.class, AlbumDTO::getId,
-                    (dto, linkBuilder) -> linkBuilderFactory.linkTo(ArtistController.class).slash("name").slash(dto.getArtistName()));
+            albumDetails.setArtist(artists.get(0));
+            return update(id, albumDetails, this::toDto, AlbumController.class, AlbumDTO::getId);
         } else {
             throw new IllegalArgumentException("Artist not found: " + albumDTO.getArtistName());
         }
@@ -113,7 +104,7 @@ public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> 
                     if (albumDTO.getArtistName() != null) {
                         List<Artist> artists = artistService.getArtistByName(albumDTO.getArtistName());
                         if (!artists.isEmpty()) {
-                            existingAlbum.setArtist(artists.getFirst());
+                            existingAlbum.setArtist(artists.get(0));
                         } else {
                             return Optional.empty();
                         }

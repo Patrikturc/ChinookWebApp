@@ -5,6 +5,8 @@ import com.sparta.pt.chinookwebapp.exceptions.InvalidInputException;
 import com.sparta.pt.chinookwebapp.exceptions.ErrorResponse;
 import com.sparta.pt.chinookwebapp.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,51 +26,39 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public List<EmployeeDTO> getAllEmployees() {
-        return employeeService.getAllEmployees();
+    public ResponseEntity<PagedModel<EntityModel<EmployeeDTO>>> getAllEmployees(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return employeeService.getAllEmployees(page, size);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Integer id) {
-        Optional<EmployeeDTO> employee = employeeService.getEmployeeById(id);
-        return employee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<EmployeeDTO>> getEmployeeById(@PathVariable Integer id) {
+        return employeeService.getEmployeeById(id);
     }
 
-    @RequestMapping
     @PostMapping
-    public ResponseEntity<?> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
-        try {
-            EmployeeDTO createdEmployee = employeeService.createEmployee(employeeDTO);
-            return ResponseEntity.ok(createdEmployee);
-        } catch (InvalidInputException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
-        }
+    public ResponseEntity<EntityModel<EmployeeDTO>> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        return employeeService.createEmployee(employeeDTO);
     }
-
 
     @PutMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> updateEmployee(
-            @PathVariable Integer id,
-            @RequestBody EmployeeDTO employeeDTO) {
-        Optional<EmployeeDTO> updatedEmployeeDTO = Optional.ofNullable(employeeService.upsertEmployee(id, employeeDTO));
-        return updatedEmployeeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<EmployeeDTO>> updateEmployee(
+            @PathVariable Integer id, @RequestBody EmployeeDTO employeeDTO) {
+        return employeeService.updateEmployee(id, employeeDTO);
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> partialUpdateEmployee(
-            @PathVariable Integer id,
-            @RequestBody EmployeeDTO employeeDTO) {
-        try {
-            Optional<EmployeeDTO> updatedEmployeeDTO = employeeService.updateEmployee(id, employeeDTO);
-            return updatedEmployeeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    @GetMapping("/search")
+    public ResponseEntity<PagedModel<EntityModel<EmployeeDTO>>> getEmployeesByName(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return employeeService.getEmployeesByName(name, page, size);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmployee(@PathVariable Integer id) {
-        boolean isDeleted = employeeService.deleteEmployee(id);
-        return isDeleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidInputException(InvalidInputException e) {
+        ErrorResponse errorResponse = new ErrorResponse("Invalid Input: " + e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

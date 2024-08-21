@@ -7,7 +7,6 @@ import com.sparta.pt.chinookwebapp.repositories.GenreRepository;
 import com.sparta.pt.chinookwebapp.utils.HateoasUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.EntityModel;
@@ -17,10 +16,7 @@ import org.springframework.hateoas.server.mvc.WebMvcLinkBuilderFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class GenreService extends BaseService<Genre, GenreDTO, GenreRepository> {
@@ -32,69 +28,55 @@ public class GenreService extends BaseService<Genre, GenreDTO, GenreRepository> 
 
     public ResponseEntity<PagedModel<EntityModel<GenreDTO>>> getAllGenres(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return getAll(pageable, this::convertToDTO, GenreController.class, GenreDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(GenreController.class).slash("name").slash(dto.getName()));
+        return getAll(pageable, this::convertToDTO, GenreController.class, GenreDTO::getId);
     }
 
     public ResponseEntity<EntityModel<GenreDTO>> getGenreById(Integer id) {
-        return getById(id, this::convertToDTO, GenreController.class, GenreDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(GenreController.class).slash("name").slash(dto.getName()));
+        return getById(id, this::convertToDTO, GenreController.class, GenreDTO::getId);
     }
 
     public ResponseEntity<EntityModel<GenreDTO>> getGenreByName(String genreName) {
-        String normalizedGenreName = sanitizeInput(genreName);
+        String sanitizedGenreName = sanitizeInput(genreName);
         Optional<Genre> genre = repository.findAll().stream()
-                .filter(g -> sanitizeInput(g.getName()).contains(normalizedGenreName))
+                .filter(g -> sanitizeInput(g.getName()).equals(sanitizedGenreName))
                 .findFirst();
 
         if (genre.isEmpty()) {
-            throw new IllegalArgumentException("Genre not found: " + genreName);
+            return ResponseEntity.notFound().build();
         }
 
         GenreDTO genreDTO = convertToDTO(genre.get());
         return hateoasUtils.createEntityResponse(
                 genreDTO,
                 GenreController.class,
-                GenreDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(GenreController.class).slash("name").slash(dto.getName()),
-                "genre"
+                GenreDTO::getId
         );
     }
 
     public ResponseEntity<EntityModel<GenreDTO>> createGenre(GenreDTO genreDTO) {
         Genre genre = convertToEntity(genreDTO);
-        List<Genre> allGenres = repository.findAll();
+        setNextId(genre);
 
-        int maxId = allGenres.stream()
-                .max(Comparator.comparingInt(Genre::getId))
-                .map(Genre::getId)
-                .orElse(0);
-        genre.setId(maxId + 1);
-
-        return create(genre, this::convertToDTO, GenreController.class, GenreDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(GenreController.class).slash("name").slash(dto.getName()));
+        Genre savedGenre = repository.save(genre);
+        return getById(savedGenre.getId(), this::convertToDTO, GenreController.class, GenreDTO::getId);
     }
 
     public ResponseEntity<EntityModel<GenreDTO>> updateGenre(Integer id, GenreDTO genreDTO) {
         Genre genreDetails = convertToEntity(genreDTO);
-        return update(id, genreDetails, this::convertToDTO, GenreController.class, GenreDTO::getId,
-                (dto, linkBuilder) -> linkBuilderFactory.linkTo(GenreController.class).slash("name").slash(dto.getName()));
+        return update(id, genreDetails, this::convertToDTO, GenreController.class, GenreDTO::getId);
     }
 
     public ResponseEntity<EntityModel<GenreDTO>> patchGenre(Integer id, GenreDTO genreDTO) {
         Optional<Genre> patchedGenre = repository.findById(id)
-                .flatMap(existingGenre -> {
+                .map(existingGenre -> {
                     if (genreDTO.getName() != null) {
                         existingGenre.setName(genreDTO.getName());
                     }
-                    return Optional.of(repository.save(existingGenre));
+                    return repository.save(existingGenre);
                 });
 
-        if (patchedGenre.isPresent()) {
-            return getGenreById(patchedGenre.get().getId());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return patchedGenre.map(genre -> getById(genre.getId(), this::convertToDTO, GenreController.class, GenreDTO::getId))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     public ResponseEntity<Void> deleteGenre(Integer id) {
@@ -103,7 +85,9 @@ public class GenreService extends BaseService<Genre, GenreDTO, GenreRepository> 
 
     @Override
     protected void updateEntity(Genre existingGenre, Genre genreDetails) {
-        existingGenre.setName(genreDetails.getName());
+        if (genreDetails.getName() != null) {
+            existingGenre.setName(genreDetails.getName());
+        }
     }
 
     private GenreDTO convertToDTO(Genre genre) {

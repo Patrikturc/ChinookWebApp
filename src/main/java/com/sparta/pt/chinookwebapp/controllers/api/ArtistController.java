@@ -8,6 +8,10 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 @RequestMapping("/api/artists")
 public class ArtistController {
@@ -57,5 +61,9 @@ public class ArtistController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteArtist(@PathVariable Integer id) {
         return artistService.deleteArtist(id);
+    }
+
+    private String urlDecode(String value) {
+        return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }
 }

@@ -35,6 +35,11 @@ public class AlbumService {
                 .map(album -> new AlbumDTO(album.getId(), album.getTitle(), album.getArtist().getName()));
     }
 
+    public Optional<AlbumDTO> getAlbumByTitle(String title) {
+        return albumRepository.findByTitle(title)
+                .map(album -> new AlbumDTO(album.getId(), album.getTitle(), album.getArtist().getName()));
+    }
+
     public Album createAlbum(Album album, String artistName) {
         Optional<Artist> artistOptional = artistService.getArtistByName(artistName);
 

@@ -33,6 +33,13 @@ public class AlbumController {
         return album.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/title/{title}")
+    public ResponseEntity<AlbumDTO> getAlbumByTitle(@PathVariable String title) {
+        Optional<AlbumDTO> albumDTO = albumService.getAlbumByTitle(title);
+        return albumDTO.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<AlbumDTO> createAlbum(@RequestBody AlbumDTO albumDTO) {
         try {

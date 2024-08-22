@@ -1,8 +1,10 @@
 package com.sparta.pt.chinookwebapp.dtos;
 
+import org.springframework.hateoas.RepresentationModel;
+
 import java.math.BigDecimal;
 
-public class TrackDTO {
+public class TrackDTO extends RepresentationModel<TrackDTO> {
     private Integer id;
     private String name;
     private String composer;

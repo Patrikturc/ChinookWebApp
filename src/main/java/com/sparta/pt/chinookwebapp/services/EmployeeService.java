@@ -103,6 +103,24 @@ public class EmployeeService extends BaseService<Employee, EmployeeDTO, Employee
         existingEmployee.setReportsTo(employeeDetails.getReportsTo());
     }
 
+    @Override
+    protected void updateEntityPartial(Employee existingEntity, EmployeeDTO dtoDetails) {
+        if (dtoDetails.getFirstName() != null) existingEntity.setFirstName(dtoDetails.getFirstName());
+        if (dtoDetails.getLastName() != null) existingEntity.setLastName(dtoDetails.getLastName());
+        if (dtoDetails.getTitle() != null) existingEntity.setTitle(dtoDetails.getTitle());
+        if (dtoDetails.getBirthDate() != null) existingEntity.setBirthDate(dtoDetails.getBirthDateAsInstant());
+        if (dtoDetails.getHireDate() != null) existingEntity.setHireDate(dtoDetails.getHireDateAsInstant());
+        if (dtoDetails.getAddress() != null) existingEntity.setAddress(dtoDetails.getAddress());
+        if (dtoDetails.getCity() != null) existingEntity.setCity(dtoDetails.getCity());
+        if (dtoDetails.getState() != null) existingEntity.setState(dtoDetails.getState());
+        if (dtoDetails.getCountry() != null) existingEntity.setCountry(dtoDetails.getCountry());
+        if (dtoDetails.getPostalCode() != null) existingEntity.setPostalCode(dtoDetails.getPostalCode());
+        if (dtoDetails.getPhone() != null) existingEntity.setPhone(dtoDetails.getPhone());
+        if (dtoDetails.getFax() != null) existingEntity.setFax(dtoDetails.getFax());
+        if (dtoDetails.getEmail() != null) existingEntity.setEmail(dtoDetails.getEmail());
+        if (dtoDetails.getReportsToFullName() != null) setReportsToByName(existingEntity, dtoDetails.getReportsToFullName());
+    }
+
     private EmployeeDTO toDto(Employee employee) {
         return new EmployeeDTO(
                 employee.getId(),

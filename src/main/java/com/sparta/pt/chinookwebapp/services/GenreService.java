@@ -90,6 +90,13 @@ public class GenreService extends BaseService<Genre, GenreDTO, GenreRepository> 
         }
     }
 
+    @Override
+    protected void updateEntityPartial(Genre existingEntity, GenreDTO dtoDetails) {
+        if (dtoDetails.getName() != null) {
+            existingEntity.setName(dtoDetails.getName());
+        }
+    }
+
     private GenreDTO convertToDTO(Genre genre) {
         return new GenreDTO(genre.getId(), genre.getName());
     }

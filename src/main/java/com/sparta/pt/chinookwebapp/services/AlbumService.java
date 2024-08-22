@@ -20,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> {
@@ -75,19 +74,7 @@ public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> 
     }
 
     public ResponseEntity<EntityModel<AlbumDTO>> patchAlbum(Integer id, AlbumDTO albumDTO) {
-        Optional<Album> patchedAlbum = repository.findById(id)
-                .map(existingAlbum -> {
-                    if (albumDTO.getTitle() != null) existingAlbum.setTitle(albumDTO.getTitle());
-                    if (albumDTO.getArtistName() != null) {
-                        List<Artist> artists = artistService.getArtistByName(albumDTO.getArtistName());
-                        if (!artists.isEmpty()) existingAlbum.setArtist(artists.getFirst());
-                    }
-                    return repository.save(existingAlbum);
-                });
-        return patchedAlbum.map(this::toDto).map(dto -> {
-            addCustomLinks(dto);
-            return createEntityResponse(dto);
-        }).orElseGet(() -> ResponseEntity.notFound().build());
+        return patch(id, albumDTO, this::toDto, AlbumController.class, AlbumDTO::getId);
     }
 
     public ResponseEntity<Void> deleteAlbum(Integer id) {
@@ -98,6 +85,15 @@ public class AlbumService extends BaseService<Album, AlbumDTO, AlbumRepository> 
     protected void updateEntity(Album existingAlbum, Album albumDetails) {
         if (albumDetails.getTitle() != null) existingAlbum.setTitle(albumDetails.getTitle());
         if (albumDetails.getArtist() != null) existingAlbum.setArtist(albumDetails.getArtist());
+    }
+
+    @Override
+    protected void updateEntityPartial(Album existingAlbum, AlbumDTO albumDTO) {
+        if (albumDTO.getTitle() != null) existingAlbum.setTitle(albumDTO.getTitle());
+        if (albumDTO.getArtistName() != null) {
+            List<Artist> artists = artistService.getArtistByName(albumDTO.getArtistName());
+            if (!artists.isEmpty()) existingAlbum.setArtist(artists.getFirst());
+        }
     }
 
     private AlbumDTO toDto(Album album) {

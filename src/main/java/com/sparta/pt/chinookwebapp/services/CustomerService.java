@@ -110,4 +110,15 @@ public class CustomerService extends BaseService<Customer, CustomerDTO, Customer
         existingCustomer.setEmail(customerDetails.getEmail());
         existingCustomer.setSupportRep(customerDetails.getSupportRep());
     }
+
+    @Override
+    protected void updateEntityPartial(Customer existingEntity, CustomerDTO dtoDetails) {
+        if (dtoDetails.getFirstName() != null) existingEntity.setFirstName(dtoDetails.getFirstName());
+        if (dtoDetails.getLastName() != null) existingEntity.setLastName(dtoDetails.getLastName());
+        if (dtoDetails.getCountry() != null) existingEntity.setCountry(dtoDetails.getCountry());
+        if (dtoDetails.getPostalCode() != null) existingEntity.setPostalCode(dtoDetails.getPostalCode());
+        if (dtoDetails.getPhone() != null) existingEntity.setPhone(dtoDetails.getPhone());
+        if (dtoDetails.getEmail() != null) existingEntity.setEmail(dtoDetails.getEmail());
+        if (dtoDetails.getSupportRepName() != null) setSupportRepByName(existingEntity, dtoDetails.getSupportRepName());
+    }
 }

@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -80,19 +79,7 @@ public class ArtistService extends BaseService<Artist, ArtistDTO, ArtistReposito
     }
 
     public ResponseEntity<EntityModel<ArtistDTO>> patchArtist(Integer id, ArtistDTO artistDTO) {
-        Optional<Artist> patchedArtist = repository.findById(id)
-                .flatMap(existingArtist -> {
-                    if (artistDTO.getName() != null) {
-                        existingArtist.setName(artistDTO.getName());
-                    }
-                    return Optional.of(repository.save(existingArtist));
-                });
-
-        if (patchedArtist.isPresent()) {
-            return getArtistById(patchedArtist.get().getId());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return patch(id, artistDTO, this::toDto, ArtistController.class, ArtistDTO::getId);
     }
 
     public ResponseEntity<Void> deleteArtist(Integer id) {
@@ -102,6 +89,14 @@ public class ArtistService extends BaseService<Artist, ArtistDTO, ArtistReposito
     @Override
     protected void updateEntity(Artist existingArtist, Artist artistDetails) {
         existingArtist.setName(artistDetails.getName());
+    }
+
+    @Override
+    protected void updateEntityPartial(Artist existingArtist, ArtistDTO artistDTO) {
+        // Update fields based on the non-null values in artistDTO
+        if (artistDTO.getName() != null) {
+            existingArtist.setName(artistDTO.getName());
+        }
     }
 
     private ArtistDTO toDto(Artist artist) {

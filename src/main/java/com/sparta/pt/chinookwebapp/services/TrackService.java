@@ -115,6 +115,18 @@ public class TrackService extends BaseService<Track, TrackDTO, TrackRepository> 
         if (trackDetails.getUnitPrice() != null) existingTrack.setUnitPrice(trackDetails.getUnitPrice());
     }
 
+    @Override
+    protected void updateEntityPartial(Track existingEntity, TrackDTO dtoDetails) {
+        if (dtoDetails.getName() != null) existingEntity.setName(dtoDetails.getName());
+        if (dtoDetails.getComposer() != null) existingEntity.setComposer(dtoDetails.getComposer());
+        if (dtoDetails.getMilliseconds() != null) existingEntity.setMilliseconds(dtoDetails.getMilliseconds());
+        if (dtoDetails.getBytes() != null) existingEntity.setBytes(dtoDetails.getBytes());
+        if (dtoDetails.getUnitPrice() != null) existingEntity.setUnitPrice(dtoDetails.getUnitPrice());
+        if (dtoDetails.getMediaTypeName() != null) {
+            existingEntity.setMediaType(mediaTypeRepository.findByName(dtoDetails.getMediaTypeName()).orElse(null));
+        }
+    }
+
     private ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getPagedModelResponseEntity(Page<Track> tracks) {
         Page<TrackDTO> trackDTOs = tracks.map(this::convertToDTO);
         PagedModel<EntityModel<TrackDTO>> pagedModel = hateoasUtils.createPagedResponse(trackDTOs, TrackController.class, TrackDTO::getId).getBody();

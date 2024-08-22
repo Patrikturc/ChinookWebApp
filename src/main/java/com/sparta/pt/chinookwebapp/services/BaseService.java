@@ -76,6 +76,21 @@ public abstract class BaseService<T, D, R extends JpaRepository<T, Integer>> {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    public ResponseEntity<EntityModel<D>> patch(Integer id,
+                                                D dtoDetails,
+                                                Function<T, D> toDto,
+                                                Class<?> controllerClass,
+                                                Function<D, Object> idExtractor) {
+        Optional<T> patchedEntity = repository.findById(id)
+                .map(existingEntity -> {
+                    updateEntityPartial(existingEntity, dtoDetails);
+                    return repository.save(existingEntity);
+                });
+
+        return patchedEntity.map(entity -> getById(id, toDto, controllerClass, idExtractor))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     public ResponseEntity<Void> delete(Integer id) {
         if (repository.existsById(id)) {
             repository.deleteById(id);
@@ -85,6 +100,8 @@ public abstract class BaseService<T, D, R extends JpaRepository<T, Integer>> {
     }
 
     protected abstract void updateEntity(T existingEntity, T entityDetails);
+
+    protected abstract void updateEntityPartial(T existingEntity, D dtoDetails);
 
     void setNextId(T entity) {
         List<T> allEntities = repository.findAll();

@@ -63,15 +63,15 @@ public class AlbumController {
 
     @PutMapping("/{id}")
     public ResponseEntity<AlbumDTO> updateAlbum(@PathVariable Integer id, @RequestBody AlbumDTO albumDTO) {
-        return albumService.updateAlbum(id, albumDTO)
-                .map(ResponseEntity::ok)
+        Optional<AlbumDTO> updatedAlbum = albumService.upsertAlbum(id, albumDTO);
+        return updatedAlbum.map(dto -> ResponseEntity.ok(albumDTOAssembler.toModel(dto)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<AlbumDTO> patchAlbum(@PathVariable Integer id, @RequestBody AlbumDTO albumDTO) {
-        return albumService.patchAlbum(id, albumDTO)
-                .map(ResponseEntity::ok)
+        Optional<AlbumDTO> updatedAlbum = albumService.patchAlbum(id, albumDTO);
+        return updatedAlbum.map(dto -> ResponseEntity.ok(albumDTOAssembler.toModel(dto)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 

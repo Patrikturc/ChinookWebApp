@@ -1,6 +1,7 @@
 // TrackService.java
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.converters.TrackDtoConverter;
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
 import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.models.Genre;
@@ -11,6 +12,7 @@ import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
 import com.sparta.pt.chinookwebapp.repositories.GenreRepository;
 import com.sparta.pt.chinookwebapp.repositories.MediatypeRepository;
 import com.sparta.pt.chinookwebapp.repositories.TrackRepository;
+import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,55 +28,47 @@ import java.util.stream.Collectors;
 public class TrackService {
 
     private final TrackRepository trackRepository;
-    private final AlbumRepository albumRepository;
-    private final MediatypeRepository mediaTypeRepository;
-    private final GenreRepository genreRepository;
+    private final TrackDtoConverter trackDtoConverter;
+    private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public TrackService(TrackRepository trackRepository, AlbumRepository albumRepository, MediatypeRepository mediaTypeRepository, GenreRepository genreRepository) {
+    public TrackService(TrackRepository trackRepository, TrackDtoConverter trackDtoConverter, IdManagementUtils idManagementUtils) {
         this.trackRepository = trackRepository;
-        this.albumRepository = albumRepository;
-        this.mediaTypeRepository = mediaTypeRepository;
-        this.genreRepository = genreRepository;
+        this.trackDtoConverter = trackDtoConverter;
+        this.idManagementUtils = idManagementUtils;
     }
 
     public Page<TrackDTO> getAllTracks(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Track> tracks = trackRepository.findAll(pageable);
-        return tracks.map(this::convertToDTO);
+        return tracks.map(trackDtoConverter::convertToDTO);
     }
 
     public Page<TrackDTO> getTracksByGenreName(String genreName, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Track> tracks = trackRepository.findByGenreNameContainingIgnoreCase(genreName, pageable);
-        return tracks.map(this::convertToDTO);
+        return tracks.map(trackDtoConverter::convertToDTO);
     }
 
     public Page<TrackDTO> getTracksByAlbumTitle(String albumTitle, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Track> tracks = trackRepository.findByAlbumTitleContainingIgnoreCase(albumTitle, pageable);
-        return tracks.map(this::convertToDTO);
+        return tracks.map(trackDtoConverter::convertToDTO);
     }
 
     public Optional<TrackDTO> getTrackById(int id) {
-        return trackRepository.findById(id).map(this::convertToDTO);
+        return trackRepository.findById(id).map(trackDtoConverter::convertToDTO);
     }
 
     public TrackDTO createTrack(TrackDTO trackDTO) {
-        Track track = convertToEntity(trackDTO);
+        Track track = trackDtoConverter.convertToEntity(trackDTO);
 
-        int maxId = trackRepository.findAll().stream()
-                .max(Comparator.comparingInt(Track::getId))
-                .map(Track::getId)
-                .orElse(0);
-        track.setId(maxId + 1);
-
-        setAlbumByTitle(track, trackDTO.getAlbumTitle());
-        setMediaTypeByName(track, trackDTO.getMediaTypeName());
-        setGenreByName(track, trackDTO.getGenreName());
+        List<Track> allTracks = trackRepository.findAll();
+        int newId = idManagementUtils.generateId(allTracks, Track::getId);
+        track.setId(newId);
 
         Track savedTrack = trackRepository.save(track);
-        return convertToDTO(savedTrack);
+        return trackDtoConverter.convertToDTO(savedTrack);
     }
 
     public Optional<TrackDTO> updateTrack(int id, TrackDTO trackDTO) {
@@ -84,31 +78,25 @@ public class TrackService {
             if (trackDTO.getMilliseconds() != null) existingTrack.setMilliseconds(trackDTO.getMilliseconds());
             if (trackDTO.getBytes() != null) existingTrack.setBytes(trackDTO.getBytes());
             if (trackDTO.getUnitPrice() != null) existingTrack.setUnitPrice(trackDTO.getUnitPrice());
-
-            setAlbumByTitle(existingTrack, trackDTO.getAlbumTitle());
-            setMediaTypeByName(existingTrack, trackDTO.getMediaTypeName());
-            setGenreByName(existingTrack, trackDTO.getGenreName());
+            if (trackDTO.getAlbumTitle() != null) trackDtoConverter.setAlbumByTitle(existingTrack, trackDTO.getAlbumTitle());
+            if (trackDTO.getMediaTypeName() != null) trackDtoConverter.setMediaTypeByName(existingTrack, trackDTO.getMediaTypeName());
+            if (trackDTO.getGenreName() != null) trackDtoConverter.setGenreByName(existingTrack, trackDTO.getGenreName());
 
             Track updatedTrack = trackRepository.save(existingTrack);
-            return convertToDTO(updatedTrack);
+            return trackDtoConverter.convertToDTO(updatedTrack);
         });
     }
 
     public TrackDTO upsertTrack(int id, TrackDTO trackDTO) {
-        Track track = convertToEntity(trackDTO);
+        Track track = trackDtoConverter.convertToEntity(trackDTO);
         track.setId(id);
-
-        setAlbumByTitle(track, trackDTO.getAlbumTitle());
-        setMediaTypeByName(track, trackDTO.getMediaTypeName());
-        setGenreByName(track, trackDTO.getGenreName());
 
         if (!trackRepository.existsById(id)) {
             Track savedTrack = trackRepository.save(track);
-            return convertToDTO(savedTrack);
+            return trackDtoConverter.convertToDTO(savedTrack);
         }
 
-        updateTrack(id, trackDTO);
-        return convertToDTO(track);
+        return updateTrack(id, trackDTO).orElse(null);
     }
 
     public boolean deleteTrack(int id) {
@@ -117,57 +105,5 @@ public class TrackService {
             return true;
         }
         return false;
-    }
-
-    private void setAlbumByTitle(Track track, String albumTitle) {
-        if (albumTitle != null && !albumTitle.isEmpty()) {
-            Optional<Album> album = albumRepository.findAll().stream()
-                    .filter(a -> a.getTitle().equalsIgnoreCase(albumTitle))
-                    .findFirst();
-            album.ifPresent(track::setAlbum);
-        }
-    }
-
-    private void setMediaTypeByName(Track track, String mediaTypeName) {
-        if (mediaTypeName != null && !mediaTypeName.isEmpty()) {
-            Optional<Mediatype> mediaType = mediaTypeRepository.findAll().stream()
-                    .filter(mt -> mt.getName().equalsIgnoreCase(mediaTypeName))
-                    .findFirst();
-            mediaType.ifPresent(track::setMediaType);
-        }
-    }
-
-    private void setGenreByName(Track track, String genreName) {
-        if (genreName != null && !genreName.isEmpty()) {
-            Optional<Genre> genre = genreRepository.findAll().stream()
-                    .filter(g -> g.getName().equalsIgnoreCase(genreName))
-                    .findFirst();
-            genre.ifPresent(track::setGenre);
-        }
-    }
-
-    private TrackDTO convertToDTO(Track track) {
-        TrackDTO dto = new TrackDTO();
-        dto.setId(track.getId());
-        dto.setName(track.getName());
-        dto.setComposer(track.getComposer());
-        dto.setMilliseconds(track.getMilliseconds());
-        dto.setBytes(track.getBytes());
-        dto.setUnitPrice(track.getUnitPrice());
-        dto.setAlbumTitle(track.getAlbum() != null ? track.getAlbum().getTitle() : null);
-        dto.setMediaTypeName(track.getMediaType() != null ? track.getMediaType().getName() : null);
-        dto.setGenreName(track.getGenre() != null ? track.getGenre().getName() : null);
-        return dto;
-    }
-
-    private Track convertToEntity(TrackDTO trackDTO) {
-        Track track = new Track();
-        track.setId(trackDTO.getId());
-        track.setName(trackDTO.getName());
-        track.setComposer(trackDTO.getComposer());
-        track.setMilliseconds(trackDTO.getMilliseconds());
-        track.setBytes(trackDTO.getBytes());
-        track.setUnitPrice(trackDTO.getUnitPrice());
-        return track;
     }
 }

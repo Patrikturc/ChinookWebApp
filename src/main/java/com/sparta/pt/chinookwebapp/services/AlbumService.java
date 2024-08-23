@@ -1,10 +1,8 @@
 package com.sparta.pt.chinookwebapp.services;
 
-import com.sparta.pt.chinookwebapp.converters.AlbumDtoConverter;
+import com.sparta.pt.chinookwebapp.converters.AlbumDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.AlbumDTO;
 import com.sparta.pt.chinookwebapp.models.Album;
-import com.sparta.pt.chinookwebapp.models.Artist;
-import com.sparta.pt.chinookwebapp.models.Track;
 import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
 import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,20 +11,18 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class AlbumService {
 
     private final AlbumRepository albumRepository;
-    private final AlbumDtoConverter albumDtoConverter;
+    private final AlbumDTOConverter albumDtoConverter;
     private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public AlbumService(AlbumRepository albumRepository, AlbumDtoConverter albumDtoConverter, IdManagementUtils idManagementUtils) {
+    public AlbumService(AlbumRepository albumRepository, AlbumDTOConverter albumDtoConverter, IdManagementUtils idManagementUtils) {
         this.albumRepository = albumRepository;
         this.albumDtoConverter = albumDtoConverter;
         this.idManagementUtils = idManagementUtils;

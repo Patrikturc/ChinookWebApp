@@ -5,7 +5,7 @@ import com.sparta.pt.chinookwebapp.models.Genre;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GenreDtoConverter extends BaseDtoConverter<Genre, GenreDTO> {
+public class GenreDTOConverter extends BaseDTOConverter<Genre, GenreDTO> {
 
     @Override
     public GenreDTO convertToDTO(Genre genre) {

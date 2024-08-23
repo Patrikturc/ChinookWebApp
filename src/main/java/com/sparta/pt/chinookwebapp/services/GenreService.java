@@ -1,6 +1,6 @@
 package com.sparta.pt.chinookwebapp.services;
 
-import com.sparta.pt.chinookwebapp.converters.GenreDtoConverter;
+import com.sparta.pt.chinookwebapp.converters.GenreDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.GenreDTO;
 import com.sparta.pt.chinookwebapp.models.Genre;
 import com.sparta.pt.chinookwebapp.repositories.GenreRepository;
@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 public class GenreService {
 
     private final GenreRepository genreRepository;
-    private final GenreDtoConverter genreDtoConverter;
+    private final GenreDTOConverter genreDtoConverter;
     private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public GenreService(GenreRepository genreRepository, GenreDtoConverter genreDtoConverter, IdManagementUtils idManagementUtils) {
+    public GenreService(GenreRepository genreRepository, GenreDTOConverter genreDtoConverter, IdManagementUtils idManagementUtils) {
         this.genreRepository = genreRepository;
         this.genreDtoConverter = genreDtoConverter;
         this.idManagementUtils = idManagementUtils;

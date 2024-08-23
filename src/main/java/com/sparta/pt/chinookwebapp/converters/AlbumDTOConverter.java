@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-public class AlbumDtoConverter extends BaseDtoConverter<Album, AlbumDTO> {
+public class AlbumDTOConverter extends BaseDTOConverter<Album, AlbumDTO> {
 
     private final ArtistRepository artistRepository;
 
     @Autowired
-    public AlbumDtoConverter(ArtistRepository artistRepository) {
+    public AlbumDTOConverter(ArtistRepository artistRepository) {
         this.artistRepository = artistRepository;
     }
 

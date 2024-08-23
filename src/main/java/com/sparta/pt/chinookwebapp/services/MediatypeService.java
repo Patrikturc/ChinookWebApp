@@ -1,6 +1,6 @@
 package com.sparta.pt.chinookwebapp.services;
 
-import com.sparta.pt.chinookwebapp.converters.MediatypeDtoConverter;
+import com.sparta.pt.chinookwebapp.converters.MediatypeDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.MediatypeDTO;
 import com.sparta.pt.chinookwebapp.models.Mediatype;
 import com.sparta.pt.chinookwebapp.repositories.MediatypeRepository;
@@ -8,7 +8,6 @@ import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -17,11 +16,11 @@ import java.util.stream.Collectors;
 public class MediatypeService {
 
     private final MediatypeRepository mediatypeRepository;
-    private final MediatypeDtoConverter mediatypeDtoConverter;
+    private final MediatypeDTOConverter mediatypeDtoConverter;
     private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public MediatypeService(MediatypeRepository mediatypeRepository, MediatypeDtoConverter mediatypeDtoConverter, IdManagementUtils idManagementUtils) {
+    public MediatypeService(MediatypeRepository mediatypeRepository, MediatypeDTOConverter mediatypeDtoConverter, IdManagementUtils idManagementUtils) {
         this.mediatypeRepository = mediatypeRepository;
         this.mediatypeDtoConverter = mediatypeDtoConverter;
         this.idManagementUtils = idManagementUtils;

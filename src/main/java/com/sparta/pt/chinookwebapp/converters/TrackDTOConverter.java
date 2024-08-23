@@ -7,19 +7,17 @@ import com.sparta.pt.chinookwebapp.services.GenreService;
 import com.sparta.pt.chinookwebapp.services.MediatypeService;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 @Component
-public class TrackDtoConverter extends BaseDtoConverter<Track, TrackDTO> {
+public class TrackDTOConverter extends BaseDTOConverter<Track, TrackDTO> {
 
     private final AlbumService albumService;
     private final MediatypeService mediatypeService;
     private final GenreService genreService;
-    private final AlbumDtoConverter albumDtoConverter;
-    private final GenreDtoConverter genreDtoConverter;
-    private final MediatypeDtoConverter mediatypeDtoConverter;
+    private final AlbumDTOConverter albumDtoConverter;
+    private final GenreDTOConverter genreDtoConverter;
+    private final MediatypeDTOConverter mediatypeDtoConverter;
 
-    public TrackDtoConverter(AlbumService albumService, MediatypeService mediatypeService, GenreService genreService, AlbumDtoConverter albumDtoConverter, GenreDtoConverter genreDtoConverter, MediatypeDtoConverter mediatypeDtoConverter) {
+    public TrackDTOConverter(AlbumService albumService, MediatypeService mediatypeService, GenreService genreService, AlbumDTOConverter albumDtoConverter, GenreDTOConverter genreDtoConverter, MediatypeDTOConverter mediatypeDtoConverter) {
         this.albumService = albumService;
         this.mediatypeService = mediatypeService;
         this.genreService = genreService;

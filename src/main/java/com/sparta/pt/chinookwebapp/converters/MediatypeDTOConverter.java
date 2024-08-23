@@ -5,7 +5,7 @@ import com.sparta.pt.chinookwebapp.models.Mediatype;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MediatypeDtoConverter extends BaseDtoConverter<Mediatype, MediatypeDTO> {
+public class MediatypeDTOConverter extends BaseDTOConverter<Mediatype, MediatypeDTO> {
 
     @Override
     public MediatypeDTO convertToDTO(Mediatype mediaType) {

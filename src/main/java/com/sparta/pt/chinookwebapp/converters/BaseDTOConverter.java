@@ -1,6 +1,6 @@
 package com.sparta.pt.chinookwebapp.converters;
 
-public abstract class BaseDtoConverter<E, D> implements DtoConverter<E, D> {
+public abstract class BaseDTOConverter<E, D> implements DTOConverter<E, D> {
 
     @Override
     public D convertToDTO(E entity) {

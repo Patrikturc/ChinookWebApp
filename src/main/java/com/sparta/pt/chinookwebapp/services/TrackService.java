@@ -1,16 +1,9 @@
 // TrackService.java
 package com.sparta.pt.chinookwebapp.services;
 
-import com.sparta.pt.chinookwebapp.converters.TrackDtoConverter;
+import com.sparta.pt.chinookwebapp.converters.TrackDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
-import com.sparta.pt.chinookwebapp.models.Album;
-import com.sparta.pt.chinookwebapp.models.Genre;
-import com.sparta.pt.chinookwebapp.models.Mediatype;
-import com.sparta.pt.chinookwebapp.models.Mediatype;
 import com.sparta.pt.chinookwebapp.models.Track;
-import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
-import com.sparta.pt.chinookwebapp.repositories.GenreRepository;
-import com.sparta.pt.chinookwebapp.repositories.MediatypeRepository;
 import com.sparta.pt.chinookwebapp.repositories.TrackRepository;
 import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +19,11 @@ import java.util.Optional;
 public class TrackService {
 
     private final TrackRepository trackRepository;
-    private final TrackDtoConverter trackDtoConverter;
+    private final TrackDTOConverter trackDtoConverter;
     private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public TrackService(TrackRepository trackRepository, TrackDtoConverter trackDtoConverter, IdManagementUtils idManagementUtils) {
+    public TrackService(TrackRepository trackRepository, TrackDTOConverter trackDtoConverter, IdManagementUtils idManagementUtils) {
         this.trackRepository = trackRepository;
         this.trackDtoConverter = trackDtoConverter;
         this.idManagementUtils = idManagementUtils;

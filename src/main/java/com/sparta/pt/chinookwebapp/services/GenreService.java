@@ -1,12 +1,13 @@
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.converters.GenreDtoConverter;
 import com.sparta.pt.chinookwebapp.dtos.GenreDTO;
 import com.sparta.pt.chinookwebapp.models.Genre;
 import com.sparta.pt.chinookwebapp.repositories.GenreRepository;
+import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -15,35 +16,41 @@ import java.util.stream.Collectors;
 public class GenreService {
 
     private final GenreRepository genreRepository;
+    private final GenreDtoConverter genreDtoConverter;
+    private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public GenreService(GenreRepository genreRepository) {
+    public GenreService(GenreRepository genreRepository, GenreDtoConverter genreDtoConverter, IdManagementUtils idManagementUtils) {
         this.genreRepository = genreRepository;
+        this.genreDtoConverter = genreDtoConverter;
+        this.idManagementUtils = idManagementUtils;
     }
 
     public List<GenreDTO> getAllGenres() {
         return genreRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(genreDtoConverter::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public Optional<GenreDTO> getGenreById(Integer id) {
         return genreRepository.findById(id)
-                .map(this::convertToDTO);
+                .map(genreDtoConverter::convertToDTO);
+    }
+
+    public Optional<GenreDTO> getGenreByName(String name) {
+        return genreRepository.findByName(name)
+                .map(genreDtoConverter::convertToDTO);
     }
 
     public GenreDTO createGenre(GenreDTO genreDTO) {
-        Genre genre = convertToEntity(genreDTO);
-        List<Genre> allGenres = genreRepository.findAll();
+        Genre genre = genreDtoConverter.convertToEntity(genreDTO);
 
-        int maxId = allGenres.stream()
-                .max(Comparator.comparingInt(Genre::getId))
-                .map(Genre::getId)
-                .orElse(0);
-        genre.setId(maxId + 1);
+        List<Genre> allGenres = genreRepository.findAll();
+        int newId = idManagementUtils.generateId(allGenres, Genre::getId);
+        genre.setId(newId);
 
         Genre savedGenre = genreRepository.save(genre);
-        return convertToDTO(savedGenre);
+        return genreDtoConverter.convertToDTO(savedGenre);
     }
 
     public GenreDTO upsertGenre(Integer id, GenreDTO genreDTO) {
@@ -52,7 +59,7 @@ public class GenreService {
         genre.setName(genreDTO.getName());
 
         Genre savedGenre = genreRepository.save(genre);
-        return convertToDTO(savedGenre);
+        return genreDtoConverter.convertToDTO(savedGenre);
     }
 
     public Optional<GenreDTO> patchGenre(Integer id, GenreDTO genreDTO) {
@@ -62,7 +69,7 @@ public class GenreService {
                         existingGenre.setName(genreDTO.getName());
                     }
                     Genre savedGenre = genreRepository.save(existingGenre);
-                    return convertToDTO(savedGenre);
+                    return genreDtoConverter.convertToDTO(savedGenre);
                 });
     }
 
@@ -72,16 +79,5 @@ public class GenreService {
             return true;
         }
         return false;
-    }
-
-    private GenreDTO convertToDTO(Genre genre) {
-        return new GenreDTO(genre.getId(), genre.getName());
-    }
-
-    private Genre convertToEntity(GenreDTO genreDTO) {
-        Genre genre = new Genre();
-        genre.setId(genreDTO.getId());
-        genre.setName(genreDTO.getName());
-        return genre;
     }
 }

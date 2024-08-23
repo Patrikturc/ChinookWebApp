@@ -19,10 +19,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class TrackService {
@@ -73,15 +71,7 @@ public class TrackService {
 
     public Optional<TrackDTO> updateTrack(int id, TrackDTO trackDTO) {
         return trackRepository.findById(id).map(existingTrack -> {
-            if (trackDTO.getName() != null) existingTrack.setName(trackDTO.getName());
-            if (trackDTO.getComposer() != null) existingTrack.setComposer(trackDTO.getComposer());
-            if (trackDTO.getMilliseconds() != null) existingTrack.setMilliseconds(trackDTO.getMilliseconds());
-            if (trackDTO.getBytes() != null) existingTrack.setBytes(trackDTO.getBytes());
-            if (trackDTO.getUnitPrice() != null) existingTrack.setUnitPrice(trackDTO.getUnitPrice());
-            if (trackDTO.getAlbumTitle() != null) trackDtoConverter.setAlbumByTitle(existingTrack, trackDTO.getAlbumTitle());
-            if (trackDTO.getMediaTypeName() != null) trackDtoConverter.setMediaTypeByName(existingTrack, trackDTO.getMediaTypeName());
-            if (trackDTO.getGenreName() != null) trackDtoConverter.setGenreByName(existingTrack, trackDTO.getGenreName());
-
+            updateTrackFromDto(existingTrack, trackDTO);
             Track updatedTrack = trackRepository.save(existingTrack);
             return trackDtoConverter.convertToDTO(updatedTrack);
         });
@@ -105,5 +95,16 @@ public class TrackService {
             return true;
         }
         return false;
+    }
+
+    private void updateTrackFromDto(Track existingTrack, TrackDTO trackDTO) {
+        if (trackDTO.getName() != null) existingTrack.setName(trackDTO.getName());
+        if (trackDTO.getComposer() != null) existingTrack.setComposer(trackDTO.getComposer());
+        if (trackDTO.getMilliseconds() != null) existingTrack.setMilliseconds(trackDTO.getMilliseconds());
+        if (trackDTO.getBytes() != null) existingTrack.setBytes(trackDTO.getBytes());
+        if (trackDTO.getUnitPrice() != null) existingTrack.setUnitPrice(trackDTO.getUnitPrice());
+        trackDtoConverter.setAlbumByTitle(existingTrack, trackDTO.getAlbumTitle());
+        trackDtoConverter.setMediaTypeByName(existingTrack, trackDTO.getMediaTypeName());
+        trackDtoConverter.setGenreByName(existingTrack, trackDTO.getGenreName());
     }
 }

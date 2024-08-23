@@ -1,8 +1,10 @@
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.converters.MediatypeDtoConverter;
 import com.sparta.pt.chinookwebapp.dtos.MediatypeDTO;
 import com.sparta.pt.chinookwebapp.models.Mediatype;
 import com.sparta.pt.chinookwebapp.repositories.MediatypeRepository;
+import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,21 +17,30 @@ import java.util.stream.Collectors;
 public class MediatypeService {
 
     private final MediatypeRepository mediatypeRepository;
+    private final MediatypeDtoConverter mediatypeDtoConverter;
+    private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public MediatypeService(MediatypeRepository mediatypeRepository) {
+    public MediatypeService(MediatypeRepository mediatypeRepository, MediatypeDtoConverter mediatypeDtoConverter, IdManagementUtils idManagementUtils) {
         this.mediatypeRepository = mediatypeRepository;
+        this.mediatypeDtoConverter = mediatypeDtoConverter;
+        this.idManagementUtils = idManagementUtils;
     }
 
     public List<MediatypeDTO> getAllMediatypes() {
         return mediatypeRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(mediatypeDtoConverter::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public Optional<MediatypeDTO> getMediatypeById(Integer id) {
         return mediatypeRepository.findById(id)
-                .map(this::convertToDTO);
+                .map(mediatypeDtoConverter::convertToDTO);
+    }
+
+    public Optional<MediatypeDTO> getMediatypeByName(String name) {
+        return mediatypeRepository.findByName(name)
+                .map(mediatypeDtoConverter::convertToDTO);
     }
 
     public MediatypeDTO createMediatype(MediatypeDTO mediatypeDTO) {
@@ -37,14 +48,11 @@ public class MediatypeService {
         mediatype.setName(mediatypeDTO.getName());
 
         List<Mediatype> allMediatypes = mediatypeRepository.findAll();
-        int maxId = allMediatypes.stream()
-                .max(Comparator.comparingInt(Mediatype::getId))
-                .map(Mediatype::getId)
-                .orElse(0);
+        int newId = idManagementUtils.generateId(allMediatypes, Mediatype::getId);
+        mediatype.setId(newId);
 
-        mediatype.setId(maxId + 1);
         Mediatype savedMediatype = mediatypeRepository.save(mediatype);
-        return convertToDTO(savedMediatype);
+        return mediatypeDtoConverter.convertToDTO(savedMediatype);
     }
 
     public MediatypeDTO upsertMediatype(Integer id, MediatypeDTO mediatypeDTO) {
@@ -53,7 +61,7 @@ public class MediatypeService {
         mediatype.setId(id);
         mediatype.setName(mediatypeDTO.getName());
         Mediatype savedMediatype = mediatypeRepository.save(mediatype);
-        return convertToDTO(savedMediatype);
+        return mediatypeDtoConverter.convertToDTO(savedMediatype);
     }
 
     public Optional<MediatypeDTO> patchMediatype(Integer id, MediatypeDTO mediatypeDTO) {
@@ -63,7 +71,7 @@ public class MediatypeService {
                         existingMediatype.setName(mediatypeDTO.getName());
                     }
                     Mediatype savedMediatype = mediatypeRepository.save(existingMediatype);
-                    return convertToDTO(savedMediatype);
+                    return mediatypeDtoConverter.convertToDTO(savedMediatype);
                 });
     }
 
@@ -73,12 +81,5 @@ public class MediatypeService {
             return true;
         }
         return false;
-    }
-
-    private MediatypeDTO convertToDTO(Mediatype mediatype) {
-        return new MediatypeDTO(
-                mediatype.getId(),
-                mediatype.getName()
-        );
     }
 }

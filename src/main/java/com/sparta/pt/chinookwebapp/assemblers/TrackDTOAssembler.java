@@ -1,6 +1,7 @@
 package com.sparta.pt.chinookwebapp.assemblers;
 
 import com.sparta.pt.chinookwebapp.controllers.api.AlbumController;
+import com.sparta.pt.chinookwebapp.controllers.api.MediatypeController;
 import com.sparta.pt.chinookwebapp.controllers.api.TrackController;
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
 import org.springframework.hateoas.server.mvc.RepresentationModelAssemblerSupport;
@@ -24,6 +25,11 @@ public class TrackDTOAssembler extends RepresentationModelAssemblerSupport<Track
         if (trackDTO.getAlbumTitle() != null) {
             trackDTO.add(WebMvcLinkBuilder.linkTo(
                     WebMvcLinkBuilder.methodOn(AlbumController.class).getAlbumByTitle(trackDTO.getAlbumTitle())).withRel("album"));
+        }
+
+        if (trackDTO.getMediaTypeName() != null) {
+            trackDTO.add(WebMvcLinkBuilder.linkTo(
+                    WebMvcLinkBuilder.methodOn(MediatypeController.class).getMediatypeByName(trackDTO.getMediaTypeName())).withRel("mediaType"));
         }
         return trackDTO;
     }

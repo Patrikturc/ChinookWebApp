@@ -31,6 +31,12 @@ public class MediatypeController {
         return mediatypeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/name/{name}")
+    public ResponseEntity<MediatypeDTO> getMediatypeByName(@PathVariable String name) {
+        Optional<MediatypeDTO> mediatypeDTO = mediatypeService.getMediatypeByName(name);
+        return mediatypeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<MediatypeDTO> createMediatype(@RequestBody MediatypeDTO mediatypeDTO) {
         MediatypeDTO createdMediatypeDTO = mediatypeService.createMediatype(mediatypeDTO);

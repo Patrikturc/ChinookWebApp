@@ -1,8 +1,14 @@
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.converters.ArtistDTOConverter;
+import com.sparta.pt.chinookwebapp.dtos.ArtistDTO;
 import com.sparta.pt.chinookwebapp.models.Artist;
 import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
+import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -13,54 +19,57 @@ import java.util.Optional;
 public class ArtistService {
 
     private final ArtistRepository artistRepository;
+    private final ArtistDTOConverter artistDTOConverter;
+    private final IdManagementUtils idManagementUtils;
 
     @Autowired
-    public ArtistService(ArtistRepository artistRepository) {
+    public ArtistService(ArtistRepository artistRepository, ArtistDTOConverter artistDTOConverter, IdManagementUtils idManagementUtils) {
         this.artistRepository = artistRepository;
+        this.artistDTOConverter = artistDTOConverter;
+        this.idManagementUtils = idManagementUtils;
     }
 
-    public List<Artist> getAllArtists() {
-        return artistRepository.findAll();
+    public Page<ArtistDTO> getAllArtists(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return artistRepository.findAll(pageable).map(artistDTOConverter::convertToDTO);
     }
 
-    public Optional<Artist> getArtistById(Integer id) {
-        return artistRepository.findById(id);
+    public Optional<ArtistDTO> getArtistById(Integer id) {
+        return artistRepository.findById(id).map(artistDTOConverter::convertToDTO);
     }
 
-    public Optional<Artist> getArtistByName(String artistName) {
-        return artistRepository.findAll().stream()
-                .filter(artist -> artist.getName().equalsIgnoreCase(artistName))
-                .findFirst();
+    public Optional<ArtistDTO> getArtistByName(String artistName) {
+        return artistRepository.findByName(artistName).map(artistDTOConverter::convertToDTO);
     }
 
-    public Artist createArtist(Artist artist) {
+    public ArtistDTO createArtist(ArtistDTO artistDTO) {
+        Artist artist = artistDTOConverter.convertToEntity(artistDTO);
+
         List<Artist> allArtists = artistRepository.findAll();
+        int newId = idManagementUtils.generateId(allArtists, Artist::getId);
+        artist.setId(newId);
 
-        int maxId = allArtists.stream()
-                .max(Comparator.comparingInt(Artist::getId))
-                .map(Artist::getId)
-                .orElse(0);
-        artist.setId(maxId + 1);
-
-        return artistRepository.save(artist);
+        Artist savedArtist = artistRepository.save(artist);
+        return artistDTOConverter.convertToDTO(savedArtist);
     }
 
-    public Artist upsertArtist(Integer id, Artist artistDetails) {
+    public ArtistDTO upsertArtist(Integer id, ArtistDTO artistDetails) {
         Artist artist = artistRepository.findById(id).orElse(new Artist());
         artist.setId(id);
         artist.setName(artistDetails.getName());
 
-        return artistRepository.save(artist);
+        Artist savedArtist = artistRepository.save(artist);
+        return artistDTOConverter.convertToDTO(savedArtist);
     }
 
-    public Optional<Artist> patchArtist(Integer id, Artist artistDetails) {
-        return artistRepository.findById(id)
-                .map(existingArtist -> {
-                    if (artistDetails.getName() != null) {
-                        existingArtist.setName(artistDetails.getName());  // Update only non-null fields
-                    }
-                    return artistRepository.save(existingArtist);
-                });
+    public Optional<ArtistDTO> patchArtist(Integer id, Artist artistDetails) {
+        return artistRepository.findById(id).map(existingArtist -> {
+                if (artistDetails.getName() != null) {
+                    existingArtist.setName(artistDetails.getName());
+                }
+                Artist savedArtist = artistRepository.save(existingArtist);
+                return artistDTOConverter.convertToDTO(savedArtist);
+            });
     }
 
     public boolean deleteArtist(Integer id) {

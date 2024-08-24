@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AlbumDTOAssembler extends RepresentationModelAssemblerSupport<AlbumDTO, AlbumDTO> {
+
     public AlbumDTOAssembler() {
         super(AlbumController.class, AlbumDTO.class);
     }

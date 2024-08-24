@@ -1,6 +1,8 @@
 package com.sparta.pt.chinookwebapp.dtos;
 
-public class ArtistDTO {
+import org.springframework.hateoas.RepresentationModel;
+
+public class ArtistDTO extends RepresentationModel<ArtistDTO> {
     private Integer id;
     private String name;
 

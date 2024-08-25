@@ -2,9 +2,8 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 
 import com.sparta.pt.chinookwebapp.assemblers.AlbumDTOAssembler;
 import com.sparta.pt.chinookwebapp.dtos.AlbumDTO;
-import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
-import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.services.AlbumService;
+import com.sparta.pt.chinookwebapp.utils.PaginationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.hateoas.EntityModel;
@@ -12,8 +11,6 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController

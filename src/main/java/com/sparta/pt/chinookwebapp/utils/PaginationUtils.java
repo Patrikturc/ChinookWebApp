@@ -1,4 +1,4 @@
-package com.sparta.pt.chinookwebapp.controllers.api;
+package com.sparta.pt.chinookwebapp.utils;
 
 import org.springframework.data.domain.Page;
 import org.springframework.hateoas.EntityModel;

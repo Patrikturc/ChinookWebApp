@@ -1,9 +1,11 @@
 package com.sparta.pt.chinookwebapp.services;
 
 import com.sparta.pt.chinookwebapp.converters.AlbumDTOConverter;
+import com.sparta.pt.chinookwebapp.converters.ArtistDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.AlbumDTO;
 import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;
+import com.sparta.pt.chinookwebapp.repositories.ArtistRepository;
 import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,12 +22,14 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final AlbumDTOConverter albumDtoConverter;
     private final IdManagementUtils idManagementUtils;
+    private final ArtistRepository artistRepository;
 
     @Autowired
-    public AlbumService(AlbumRepository albumRepository, AlbumDTOConverter albumDtoConverter, IdManagementUtils idManagementUtils) {
+    public AlbumService(AlbumRepository albumRepository, AlbumDTOConverter albumDtoConverter, IdManagementUtils idManagementUtils, ArtistRepository artistRepository) {
         this.albumRepository = albumRepository;
         this.albumDtoConverter = albumDtoConverter;
         this.idManagementUtils = idManagementUtils;
+        this.artistRepository = artistRepository;
     }
 
     public Page<AlbumDTO> getAllAlbums(int page, int size) {
@@ -48,6 +52,8 @@ public class AlbumService {
         int newId = idManagementUtils.generateId(allAlbums, Album::getId);
         album.setId(newId);
 
+        setArtistByName(album, albumDTO.getArtistName());
+
         Album savedAlbum = albumRepository.save(album);
         return albumDtoConverter.convertToDTO(savedAlbum);
     }
@@ -57,7 +63,7 @@ public class AlbumService {
         album.setId(id);
         album.setTitle(albumDTO.getTitle());
 
-        albumDtoConverter.setArtistByName(album, albumDTO.getArtistName());
+        setArtistByName(album, albumDTO.getArtistName());
 
         Album savedAlbum = albumRepository.save(album);
         return Optional.of(albumDtoConverter.convertToDTO(savedAlbum));
@@ -69,7 +75,7 @@ public class AlbumService {
                 existingAlbum.setTitle(albumDTO.getTitle());
             }
             if (albumDTO.getArtistName() != null) {
-                albumDtoConverter.setArtistByName(existingAlbum, albumDTO.getArtistName());
+                setArtistByName(existingAlbum, albumDTO.getArtistName());
             }
             Album savedAlbum = albumRepository.save(existingAlbum);
             return albumDtoConverter.convertToDTO(savedAlbum);
@@ -82,5 +88,11 @@ public class AlbumService {
             return true;
         }
         return false;
+    }
+
+    private void setArtistByName(Album album, String artistName) {
+        if (artistName != null && !artistName.isEmpty()) {
+            artistRepository.findByName(artistName).ifPresent(album::setArtist);
+        }
     }
 }

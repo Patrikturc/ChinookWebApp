@@ -21,7 +21,9 @@ public class AlbumDTOConverter extends BaseDTOConverter<Album, AlbumDTO> {
 
     @Override
     public AlbumDTO convertToDTO(Album album) {
-        return new AlbumDTO(album.getId(), album.getTitle(),
+        return new AlbumDTO(
+                album.getId(),
+                album.getTitle(),
                 album.getArtist() != null ? album.getArtist().getName() : null);
     }
 

@@ -7,7 +7,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class ArtistDTOConverter extends BaseDTOConverter<Artist, ArtistDTO> {
     public ArtistDTO convertToDTO(Artist artist) {
-        return new ArtistDTO(artist.getId(), artist.getName());
+        return new ArtistDTO(
+                artist.getId(),
+                artist.getName());
     }
 
     public Artist convertToEntity(ArtistDTO artistDTO) {

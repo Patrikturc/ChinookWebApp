@@ -35,8 +35,7 @@ public class EmployeeService {
     }
 
     public Optional<EmployeeDTO> getEmployeeById(Integer id) {
-        return employeeRepository.findById(id)
-                .map(employeeDTOConverter::convertToDTO);
+        return employeeRepository.findById(id).map(employeeDTOConverter::convertToDTO);
     }
 
     public Optional<EmployeeDTO> getEmployeeByName(String name) {
@@ -60,7 +59,7 @@ public class EmployeeService {
             int newId = idManagementUtils.generateId(allEmployees, Employee::getId);
             employee.setId(newId);
 
-            setReportsToByName(employee, employeeDTO.getReportsToFullName());
+            setEmployeeByName(employee, employeeDTO.getReportsToFullName());
             Employee createdEmployee = employeeRepository.save(employee);
             return employeeDTOConverter.convertToDTO(createdEmployee);
         } catch (IllegalArgumentException e) {
@@ -71,7 +70,7 @@ public class EmployeeService {
     public Optional<EmployeeDTO> updateEmployee(Integer id, EmployeeDTO employeeDTO) {
         return employeeRepository.findById(id).map(employee -> {
             employeeDTOConverter.updateEmployeeFromDto(employee, employeeDTO);
-            setReportsToByName(employee, employeeDTO.getReportsToFullName());
+            setEmployeeByName(employee, employeeDTO.getReportsToFullName());
             Employee updatedEmployee = employeeRepository.save(employee);
             return employeeDTOConverter.convertToDTO(updatedEmployee);
         }).map(Optional::of).orElseThrow(() -> new InvalidInputException("Employee not found with id: " + id));
@@ -81,7 +80,7 @@ public class EmployeeService {
         Employee employee = employeeRepository.findById(id).orElse(new Employee());
         employee.setId(id);
         employeeDTOConverter.updateEmployeeFromDto(employee, employeeDTO);
-        setReportsToByName(employee, employeeDTO.getReportsToFullName());
+        setEmployeeByName(employee, employeeDTO.getReportsToFullName());
 
         Employee savedEmployee = employeeRepository.save(employee);
         return employeeDTOConverter.convertToDTO(savedEmployee);
@@ -95,7 +94,7 @@ public class EmployeeService {
         return false;
     }
 
-    private void setReportsToByName(Employee employee, String reportsToFullName) {
+    public void setEmployeeByName(Employee employee, String reportsToFullName) {
         if (reportsToFullName != null && !reportsToFullName.isEmpty()) {
             String[] nameParts = reportsToFullName.split(" ");
             if (nameParts.length == 2) {

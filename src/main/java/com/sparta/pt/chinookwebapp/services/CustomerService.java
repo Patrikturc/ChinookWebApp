@@ -1,12 +1,17 @@
 package com.sparta.pt.chinookwebapp.services;
 
+import com.sparta.pt.chinookwebapp.converters.CustomerDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.CustomerDTO;
 import com.sparta.pt.chinookwebapp.exceptions.InvalidInputException;
 import com.sparta.pt.chinookwebapp.models.Customer;
 import com.sparta.pt.chinookwebapp.models.Employee;
 import com.sparta.pt.chinookwebapp.repositories.CustomerRepository;
 import com.sparta.pt.chinookwebapp.repositories.EmployeeRepository;
+import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -18,99 +23,77 @@ import java.util.stream.Collectors;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-    private final EmployeeRepository employeeRepository;
+    private final IdManagementUtils idManagementUtils;
+    private final CustomerDTOConverter customerDTOConverter;
+    private final EmployeeService employeeService;
 
     @Autowired
-    public CustomerService(CustomerRepository customerRepository, EmployeeRepository employeeRepository) {
+    public CustomerService(CustomerRepository customerRepository, IdManagementUtils idManagementUtils, CustomerDTOConverter customerDTOConverter, EmployeeService employeeService) {
         this.customerRepository = customerRepository;
-        this.employeeRepository = employeeRepository;
+        this.idManagementUtils = idManagementUtils;
+        this.customerDTOConverter = customerDTOConverter;
+        this.employeeService = employeeService;
     }
 
-    public List<CustomerDTO> getAllCustomers() {
-        return customerRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<CustomerDTO> getAllCustomers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return customerRepository.findAll(pageable).map(customerDTOConverter::convertToDTO);
     }
 
     public Optional<CustomerDTO> getCustomerById(Integer id) {
-        return customerRepository.findById(id)
-                .map(this::convertToDTO);
+        return customerRepository.findById(id).map(customerDTOConverter::convertToDTO);
     }
 
     public CustomerDTO createCustomer(CustomerDTO customerDTO) {
-            Customer customer = convertToEntity(customerDTO);
+            Customer customer = customerDTOConverter.convertToEntity(customerDTO);
             List<Customer> allCustomers = customerRepository.findAll();
-            int maxId = allCustomers.stream()
-                    .max(Comparator.comparingInt(Customer::getId))
-                    .map(Customer::getId)
-                    .orElse(0);
-
-            customer.setId(maxId + 1);
+            int newId = idManagementUtils.generateId(allCustomers, Customer::getId);
+            customer.setId(newId);
 
             try{
-                setSupportRepByName(customer, customerDTO.getSupportRepName());
+                employeeService.setEmployeeByName(customer.getSupportRep(), customerDTO.getSupportRepName());
             } catch (IllegalArgumentException e) {
                 throw new InvalidInputException(e.getMessage());
             }
             Customer savedCustomer = customerRepository.save(customer);
-            return convertToDTO(savedCustomer);
+            return customerDTOConverter.convertToDTO(savedCustomer);
     }
 
     public Optional<CustomerDTO> updateCustomer(Integer id, CustomerDTO customerDTO) {
         return customerRepository.findById(id)
                 .map(existingCustomer -> {
-                    Customer updatedCustomer = convertToEntity(customerDTO);
+                    Customer updatedCustomer = customerDTOConverter.convertToEntity(customerDTO);
                     updatedCustomer.setId(id);
 
                     try{
-                        setSupportRepByName(updatedCustomer, customerDTO.getSupportRepName());
+                        employeeService.setEmployeeByName(updatedCustomer.getSupportRep(), customerDTO.getSupportRepName());
                     } catch (IllegalArgumentException e) {
                         throw new InvalidInputException(e.getMessage());
                     }
                     Customer savedCustomer = customerRepository.save(updatedCustomer);
-                    return convertToDTO(savedCustomer);
+                    return customerDTOConverter.convertToDTO(savedCustomer);
                 });
     }
 
     public CustomerDTO upsertCustomer(Integer id, CustomerDTO customerDTO) {
-        Customer customer = convertToEntity(customerDTO);
-        setSupportRepByName(customer, customerDTO.getSupportRepName());
+        Customer customer = customerDTOConverter.convertToEntity(customerDTO);
+        employeeService.setEmployeeByName(customer.getSupportRep(), customerDTO.getSupportRepName());
 
         if (!customerRepository.existsById(id)) {
-            customer = convertToEntity(customerDTO);
+            customer = customerDTOConverter.convertToEntity(customerDTO);
             customer.setId(id);
             try{
-                setSupportRepByName(customer, customerDTO.getSupportRepName());
+                employeeService.setEmployeeByName(customer.getSupportRep(), customerDTO.getSupportRepName());
             } catch (IllegalArgumentException e) {
                 throw new InvalidInputException(e.getMessage());
             }
             Customer savedCustomer = customerRepository.save(customer);
-            return convertToDTO(savedCustomer);
+            return customerDTOConverter.convertToDTO(savedCustomer);
         }
         customer.setId(id);
         updateCustomer(id, customerDTO);
 
-        return convertToDTO(customer);
-    }
-
-    private void setSupportRepByName(Customer customer, String supportRepName) {
-        if (supportRepName != null && !supportRepName.isEmpty()) {
-            String[] nameParts = supportRepName.split(" ");
-            if (nameParts.length == 2) {
-                String firstName = nameParts[0];
-                String lastName = nameParts[1];
-                Optional<Employee> supportRep = employeeRepository.findAll().stream()
-                        .filter(e -> e.getFirstName().equalsIgnoreCase(firstName) && e.getLastName().equalsIgnoreCase(lastName))
-                        .findFirst();
-                if (supportRep.isPresent()) {
-                    customer.setSupportRep(supportRep.get());
-                } else {
-                    throw new IllegalArgumentException("Sorry, that employee doesn't exist.");
-                }
-            } else {
-                throw new IllegalArgumentException("Please provide both first and last name.");
-            }
-        }
+        return customerDTOConverter.convertToDTO(customer);
     }
 
     public boolean deleteCustomer(Integer id) {
@@ -119,39 +102,5 @@ public class CustomerService {
             return true;
         }
         return false;
-    }
-
-    private Customer convertToEntity(CustomerDTO dto) {
-        Customer customer = new Customer();
-        customer.setFirstName(dto.getFirstName());
-        customer.setLastName(dto.getLastName());
-        customer.setCompany(dto.getCompany());
-        customer.setAddress(dto.getAddress());
-        customer.setCity(dto.getCity());
-        customer.setState(dto.getState());
-        customer.setCountry(dto.getCountry());
-        customer.setPostalCode(dto.getPostalCode());
-        customer.setPhone(dto.getPhone());
-        customer.setFax(dto.getFax());
-        customer.setEmail(dto.getEmail());
-        return customer;
-    }
-
-    private CustomerDTO convertToDTO(Customer customer) {
-        return new CustomerDTO(
-                customer.getId(),
-                customer.getFirstName(),
-                customer.getLastName(),
-                customer.getCompany(),
-                customer.getAddress(),
-                customer.getCity(),
-                customer.getState(),
-                customer.getCountry(),
-                customer.getPostalCode(),
-                customer.getPhone(),
-                customer.getFax(),
-                customer.getEmail(),
-                customer.getSupportRep() != null ? customer.getSupportRep().getFirstName() + " " + customer.getSupportRep().getLastName() : null
-        );
     }
 }

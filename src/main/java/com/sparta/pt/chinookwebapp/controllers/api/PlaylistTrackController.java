@@ -36,22 +36,21 @@ public class PlaylistTrackController {
 
         Page<PlaylistTrackDTO> playlistTracks = playlistTrackService.getAllPlaylistTracks(page, size);
         PagedModel<EntityModel<PlaylistTrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                playlistTracks.map(assembler::toModel), PlaylistTrackController.class, PlaylistTrackDTO::getPlaylistId).getBody();
+                playlistTracks.map(assembler::toModel)).getBody();
 
         return ResponseEntity.ok(pagedResources);
     }
 
     @GetMapping("/{playlistName}")
-    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getTracksByPlaylistName(
+    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getPlaylistTracksByName(
             @PathVariable String playlistName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
-
-        Page<PlaylistTrackDTO> tracks = playlistTrackService.getTracksByPlaylistName(playlistName, page, size);
+        Page<PlaylistTrackDTO> playlistTracks = playlistTrackService.getPlaylistTracksByName(playlistName, page, size);
         PagedModel<EntityModel<PlaylistTrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                tracks.map(assembler::toModel), PlaylistTrackController.class, PlaylistTrackDTO::getPlaylistId).getBody();
-
+                playlistTracks.map(assembler::toModel)).getBody();
         return ResponseEntity.ok(pagedResources);
+
     }
 
     @GetMapping("/{playlistName}/{trackName}")

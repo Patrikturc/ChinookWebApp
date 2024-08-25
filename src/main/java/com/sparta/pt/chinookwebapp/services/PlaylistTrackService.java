@@ -12,11 +12,13 @@ import com.sparta.pt.chinookwebapp.repositories.TrackRepository;
 import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -41,6 +43,29 @@ public class PlaylistTrackService {
         return playlistTracks.map(playlistTrackDtoConverter::convertToDTO);
     }
 
+    public Page<PlaylistTrackDTO> getPlaylistTracksByName(String playlistName, int page, int size) {
+        List<Playlist> playlists = playlistRepository.findAllByName(playlistName);
+        if (playlists.isEmpty()) {
+            return Page.empty();
+        }
+        List<Integer> playlistIds = playlists.stream()
+                .map(Playlist::getId)
+                .toList();
+        List<Playlisttrack> playlistTracks = playlisttrackRepository.findAll().stream()
+                .filter(playlisttrack -> playlistIds.contains(playlisttrack.getPlaylist().getId()))
+                .toList();
+        List<PlaylistTrackDTO> results = playlistTracks.stream()
+                .map(playlistTrackDtoConverter::convertToDTO)
+                .collect(Collectors.toList());
+
+        Pageable pageable = PageRequest.of(page, size);
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), results.size());
+        List<PlaylistTrackDTO> pagedList = results.subList(start, end);
+
+        return new PageImpl<>(pagedList, pageable, results.size());
+    }
+
     public Optional<PlaylistTrackDTO> getPlaylistTrackById(String playlistName, String trackName) {
         Optional<Playlist> playlist = playlistRepository.findByName(playlistName);
         Optional<Track> track = trackRepository.findByName(trackName);
@@ -51,16 +76,6 @@ public class PlaylistTrackService {
             return playlisttrackRepository.findById(id).map(playlistTrackDtoConverter::convertToDTO);
         }
         return Optional.empty();
-    }
-
-    public Page<PlaylistTrackDTO> getTracksByPlaylistName(String playlistName, int page, int size) {
-        Optional<Playlist> playlist = playlistRepository.findByName(playlistName);
-        if (playlist.isPresent()) {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Playlisttrack> playlistTracks = playlisttrackRepository.findByPlaylistId(playlist.get().getId(), pageable);
-            return playlistTracks.map(playlistTrackDtoConverter::convertToDTO);
-        }
-        return Page.empty();
     }
 
     public PlaylistTrackDTO createPlaylistTrack(PlaylistTrackDTO playlistTrackDTO) {

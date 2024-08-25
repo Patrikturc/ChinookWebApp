@@ -38,7 +38,7 @@ public class ArtistController {
             @RequestParam(defaultValue = "100") int size) {
         Page<ArtistDTO> artistsPage = artistService.getAllArtists(page, size);
         PagedModel<EntityModel<ArtistDTO>> pagedResources = paginationUtils.createPagedResponse(
-                artistsPage.map(artistDTOAssembler::toModel), ArtistController.class, ArtistDTO::getId).getBody();
+                artistsPage.map(artistDTOAssembler::toModel)).getBody();
         return ResponseEntity.ok(pagedResources);
     }
 

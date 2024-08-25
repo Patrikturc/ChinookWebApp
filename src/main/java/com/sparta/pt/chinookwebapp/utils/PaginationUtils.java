@@ -13,17 +13,14 @@ import java.util.function.Function;
 public class PaginationUtils<T> {
 
     private final PagedResourcesAssembler<T> pagedResourcesAssembler;
-
     public PaginationUtils(PagedResourcesAssembler<T> pagedResourcesAssembler) {
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
 
-    public ResponseEntity<PagedModel<EntityModel<T>>> createPagedResponse(Page<T> page, Class<?> controllerClass, Function<T, Object> idExtractor) {
+    public ResponseEntity<PagedModel<EntityModel<T>>> createPagedResponse(Page<T> page) {
+
         PagedModel<EntityModel<T>> pagedModel = pagedResourcesAssembler.toModel(page,
-                entity -> {
-                    Object id = idExtractor.apply(entity);
-                    return EntityModel.of(entity);
-                });
+                EntityModel::of);
 
         return ResponseEntity.ok(pagedModel);
     }

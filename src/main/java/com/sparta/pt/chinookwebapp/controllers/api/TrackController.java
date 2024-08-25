@@ -37,7 +37,7 @@ public class TrackController {
 
         Page<TrackDTO> tracksPage = trackService.getTracksByAlbumTitle(albumTitle, page, size);
         PagedModel<EntityModel<TrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                tracksPage.map(assembler::toModel), TrackController.class, TrackDTO::getId).getBody();
+                tracksPage.map(assembler::toModel)).getBody();
 
         return ResponseEntity.ok(pagedResources);
     }
@@ -49,7 +49,7 @@ public class TrackController {
 
         Page<TrackDTO> tracksPage = trackService.getAllTracks(page, size);
         PagedModel<EntityModel<TrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                tracksPage.map(assembler::toModel), TrackController.class, TrackDTO::getId).getBody();
+                tracksPage.map(assembler::toModel)).getBody();
 
         return ResponseEntity.ok(pagedResources);
     }
@@ -69,7 +69,7 @@ public class TrackController {
 
         Page<TrackDTO> tracksPage = trackService.getTracksByGenreName(genreName, page, size);
         PagedModel<EntityModel<TrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                tracksPage.map(assembler::toModel), TrackController.class, TrackDTO::getId).getBody();
+                tracksPage.map(assembler::toModel)).getBody();
 
         return ResponseEntity.ok(pagedResources);
     }

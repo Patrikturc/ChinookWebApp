@@ -34,7 +34,7 @@ public class AlbumController {
             @RequestParam(defaultValue = "100") int size) {
         Page<AlbumDTO> albumsPage = albumService.getAllAlbums(page, size);
         PagedModel<EntityModel<AlbumDTO>> pagedResources = paginationUtils.createPagedResponse(
-                albumsPage.map(albumDTOAssembler::toModel), AlbumController.class, AlbumDTO::getId).getBody();
+                albumsPage.map(albumDTOAssembler::toModel)).getBody();
         return ResponseEntity.ok(pagedResources);
     }
 

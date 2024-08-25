@@ -2,29 +2,10 @@ package com.sparta.pt.chinookwebapp.converters;
 
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
 import com.sparta.pt.chinookwebapp.models.Track;
-import com.sparta.pt.chinookwebapp.services.AlbumService;
-import com.sparta.pt.chinookwebapp.services.GenreService;
-import com.sparta.pt.chinookwebapp.services.MediatypeService;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TrackDTOConverter extends BaseDTOConverter<Track, TrackDTO> {
-
-    private final AlbumService albumService;
-    private final MediatypeService mediatypeService;
-    private final GenreService genreService;
-    private final AlbumDTOConverter albumDtoConverter;
-    private final GenreDTOConverter genreDtoConverter;
-    private final MediatypeDTOConverter mediatypeDtoConverter;
-
-    public TrackDTOConverter(AlbumService albumService, MediatypeService mediatypeService, GenreService genreService, AlbumDTOConverter albumDtoConverter, GenreDTOConverter genreDtoConverter, MediatypeDTOConverter mediatypeDtoConverter) {
-        this.albumService = albumService;
-        this.mediatypeService = mediatypeService;
-        this.genreService = genreService;
-        this.albumDtoConverter = albumDtoConverter;
-        this.genreDtoConverter = genreDtoConverter;
-        this.mediatypeDtoConverter = mediatypeDtoConverter;
-    }
 
     @Override
     public TrackDTO convertToDTO(Track track) {
@@ -45,34 +26,6 @@ public class TrackDTOConverter extends BaseDTOConverter<Track, TrackDTO> {
         track.setBytes(trackDTO.getBytes());
         track.setUnitPrice(trackDTO.getUnitPrice());
 
-        setAlbumByTitle(track, trackDTO.getAlbumTitle());
-        setMediaTypeByName(track, trackDTO.getMediaTypeName());
-        setGenreByName(track, trackDTO.getGenreName());
-
         return track;
-    }
-
-    public void setAlbumByTitle(Track track, String albumTitle) {
-        if (albumTitle != null && !albumTitle.isEmpty()) {
-            albumService.getAlbumByTitle(albumTitle)
-                    .map(albumDtoConverter::convertToEntity)
-                    .ifPresent(track::setAlbum);
-        }
-    }
-
-    public void setMediaTypeByName(Track track, String mediaTypeName) {
-        if (mediaTypeName != null && !mediaTypeName.isEmpty()) {
-            mediatypeService.getMediatypeByName(mediaTypeName)
-                    .map(mediatypeDtoConverter::convertToEntity)
-                    .ifPresent(track::setMediaType);
-        }
-    }
-
-    public void setGenreByName(Track track, String genreName) {
-        if (genreName != null && !genreName.isEmpty()) {
-            genreService.getGenreByName(genreName)
-                    .map(genreDtoConverter::convertToEntity)
-                    .ifPresent(track::setGenre);
-        }
     }
 }

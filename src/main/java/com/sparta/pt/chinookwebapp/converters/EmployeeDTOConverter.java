@@ -50,8 +50,6 @@ public class EmployeeDTOConverter extends BaseDTOConverter<Employee, EmployeeDTO
         employee.setFax(employeeDTO.getFax());
         employee.setEmail(employeeDTO.getEmail());
 
-        // Do not handle setting reportsTo here; the service layer will take care of it
-
         return employee;
     }
 
@@ -69,8 +67,6 @@ public class EmployeeDTOConverter extends BaseDTOConverter<Employee, EmployeeDTO
         if (employeeDTO.getPhone() != null) existingEmployee.setPhone(employeeDTO.getPhone());
         if (employeeDTO.getFax() != null) existingEmployee.setFax(employeeDTO.getFax());
         if (employeeDTO.getEmail() != null) existingEmployee.setEmail(employeeDTO.getEmail());
-
-        // Do not handle setting reportsTo here; the service layer will take care of it
     }
 
     public LocalDate convertInstantToLocalDate(Instant instant) {

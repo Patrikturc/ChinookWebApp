@@ -24,6 +24,12 @@ public class PlaylistController {
         return ResponseEntity.ok(playlists);
     }
 
+    @GetMapping("/name/{name}")
+    public ResponseEntity<Optional<PlaylistDTO>> getPlaylistByName(@PathVariable String name) {
+        Optional<PlaylistDTO> playlists = playlistService.getPlaylistByName(name);
+        return ResponseEntity.ok(playlists);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PlaylistDTO> getPlaylistById(@PathVariable int id) {
         Optional<PlaylistDTO> playlist = playlistService.getPlaylistById(id);

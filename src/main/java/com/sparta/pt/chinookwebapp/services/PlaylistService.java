@@ -27,6 +27,10 @@ public class PlaylistService {
         return playlistRepository.findById(id).map(this::convertToDTO);
     }
 
+    public Optional<PlaylistDTO> getPlaylistByName(String name) {
+        return playlistRepository.findByName(name).map(this::convertToDTO);
+    }
+
     public PlaylistDTO createPlaylist(PlaylistDTO playlistDTO) {
         Playlist playlist = convertToEntity(playlistDTO);
         List<Playlist> allPlaylists = playlistRepository.findAll();

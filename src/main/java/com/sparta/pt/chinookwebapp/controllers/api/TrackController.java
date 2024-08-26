@@ -4,11 +4,10 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 import com.sparta.pt.chinookwebapp.assemblers.TrackDTOAssembler;
 import com.sparta.pt.chinookwebapp.dtos.TrackDTO;
 import com.sparta.pt.chinookwebapp.services.TrackService;
+import com.sparta.pt.chinookwebapp.utils.CustomPagedResponse;
 import com.sparta.pt.chinookwebapp.utils.PaginationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,28 +29,22 @@ public class TrackController {
     }
 
     @GetMapping("/albums/{albumTitle}")
-    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByAlbumTitle(
+    public ResponseEntity<CustomPagedResponse<TrackDTO>> getTracksByAlbumTitle(
             @PathVariable String albumTitle,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
 
         Page<TrackDTO> tracksPage = trackService.getTracksByAlbumTitle(albumTitle, page, size);
-        PagedModel<EntityModel<TrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                tracksPage.map(assembler::toModel)).getBody();
-
-        return ResponseEntity.ok(pagedResources);
+        return paginationUtils.createPagedResponse(tracksPage.map(assembler::toModel));
     }
 
     @GetMapping
-    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getAllTracks(
+    public ResponseEntity<CustomPagedResponse<TrackDTO>> getAllTracks(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
 
         Page<TrackDTO> tracksPage = trackService.getAllTracks(page, size);
-        PagedModel<EntityModel<TrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                tracksPage.map(assembler::toModel)).getBody();
-
-        return ResponseEntity.ok(pagedResources);
+        return paginationUtils.createPagedResponse(tracksPage.map(assembler::toModel));
     }
 
     @GetMapping("/{id}")
@@ -62,16 +55,13 @@ public class TrackController {
     }
 
     @GetMapping("/genres/{genreName}")
-    public ResponseEntity<PagedModel<EntityModel<TrackDTO>>> getTracksByGenreName(
+    public ResponseEntity<CustomPagedResponse<TrackDTO>> getTracksByGenreName(
             @PathVariable String genreName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
 
         Page<TrackDTO> tracksPage = trackService.getTracksByGenreName(genreName, page, size);
-        PagedModel<EntityModel<TrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                tracksPage.map(assembler::toModel)).getBody();
-
-        return ResponseEntity.ok(pagedResources);
+        return paginationUtils.createPagedResponse(tracksPage.map(assembler::toModel));
     }
 
     @PostMapping

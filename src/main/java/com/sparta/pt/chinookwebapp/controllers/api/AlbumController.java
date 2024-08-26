@@ -3,11 +3,10 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 import com.sparta.pt.chinookwebapp.assemblers.AlbumDTOAssembler;
 import com.sparta.pt.chinookwebapp.dtos.AlbumDTO;
 import com.sparta.pt.chinookwebapp.services.AlbumService;
+import com.sparta.pt.chinookwebapp.utils.CustomPagedResponse;
 import com.sparta.pt.chinookwebapp.utils.PaginationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,13 +28,12 @@ public class AlbumController {
     }
 
     @GetMapping
-    public ResponseEntity<PagedModel<EntityModel<AlbumDTO>>> getAllAlbums(
+    public ResponseEntity<CustomPagedResponse<AlbumDTO>> getAllAlbums(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
+
         Page<AlbumDTO> albumsPage = albumService.getAllAlbums(page, size);
-        PagedModel<EntityModel<AlbumDTO>> pagedResources = paginationUtils.createPagedResponse(
-                albumsPage.map(albumDTOAssembler::toModel)).getBody();
-        return ResponseEntity.ok(pagedResources);
+        return paginationUtils.createPagedResponse(albumsPage.map(albumDTOAssembler::toModel));
     }
 
     @GetMapping("/{id}")

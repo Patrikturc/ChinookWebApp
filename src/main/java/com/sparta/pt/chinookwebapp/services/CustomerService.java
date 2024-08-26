@@ -4,9 +4,7 @@ import com.sparta.pt.chinookwebapp.converters.CustomerDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.CustomerDTO;
 import com.sparta.pt.chinookwebapp.exceptions.InvalidInputException;
 import com.sparta.pt.chinookwebapp.models.Customer;
-import com.sparta.pt.chinookwebapp.models.Employee;
 import com.sparta.pt.chinookwebapp.repositories.CustomerRepository;
-import com.sparta.pt.chinookwebapp.repositories.EmployeeRepository;
 import com.sparta.pt.chinookwebapp.utils.IdManagementUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,10 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CustomerService {

@@ -2,7 +2,6 @@ package com.sparta.pt.chinookwebapp.services;
 
 import com.sparta.pt.chinookwebapp.models.Role;
 import com.sparta.pt.chinookwebapp.models.User;
-import com.sparta.pt.chinookwebapp.repositories.EmployeeRepository;
 import com.sparta.pt.chinookwebapp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;

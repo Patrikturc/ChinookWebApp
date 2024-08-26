@@ -3,10 +3,9 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 import com.sparta.pt.chinookwebapp.assemblers.PlaylistTrackDTOAssembler;
 import com.sparta.pt.chinookwebapp.dtos.PlaylistTrackDTO;
 import com.sparta.pt.chinookwebapp.services.PlaylistTrackService;
+import com.sparta.pt.chinookwebapp.utils.CustomPagedResponse;
 import com.sparta.pt.chinookwebapp.utils.PaginationUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,26 +29,20 @@ public class PlaylistTrackController {
     }
 
     @GetMapping
-    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getAllPlaylistTracks(
+    public ResponseEntity<CustomPagedResponse<PlaylistTrackDTO>> getAllPlaylistTracks(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
-
         Page<PlaylistTrackDTO> playlistTracks = playlistTrackService.getAllPlaylistTracks(page, size);
-        PagedModel<EntityModel<PlaylistTrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                playlistTracks.map(assembler::toModel)).getBody();
-
-        return ResponseEntity.ok(pagedResources);
+        return paginationUtils.createPagedResponse(playlistTracks.map(assembler::toModel));
     }
 
     @GetMapping("/{playlistName}")
-    public ResponseEntity<PagedModel<EntityModel<PlaylistTrackDTO>>> getPlaylistTracksByName(
+    public ResponseEntity<CustomPagedResponse<PlaylistTrackDTO>> getPlaylistTracksByName(
             @PathVariable String playlistName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size) {
         Page<PlaylistTrackDTO> playlistTracks = playlistTrackService.getPlaylistTracksByName(playlistName, page, size);
-        PagedModel<EntityModel<PlaylistTrackDTO>> pagedResources = paginationUtils.createPagedResponse(
-                playlistTracks.map(assembler::toModel)).getBody();
-        return ResponseEntity.ok(pagedResources);
+        return paginationUtils.createPagedResponse(playlistTracks.map(assembler::toModel));
 
     }
 

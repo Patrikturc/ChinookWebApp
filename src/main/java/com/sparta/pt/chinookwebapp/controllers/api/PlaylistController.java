@@ -2,7 +2,6 @@ package com.sparta.pt.chinookwebapp.controllers.api;
 
 import com.sparta.pt.chinookwebapp.dtos.PlaylistDTO;
 import com.sparta.pt.chinookwebapp.services.PlaylistService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +21,7 @@ public class PlaylistController {
 
     @GetMapping
     public ResponseEntity<Page<PlaylistDTO>> getAllPlaylists(@RequestParam(defaultValue = "0") int page,
-                                                             @RequestParam(defaultValue = "10") int size) {
+                                                             @RequestParam(defaultValue = "100") int size) {
         Page<PlaylistDTO> playlists = playlistService.getAllPlaylists(page, size);
         return ResponseEntity.ok(playlists);
     }

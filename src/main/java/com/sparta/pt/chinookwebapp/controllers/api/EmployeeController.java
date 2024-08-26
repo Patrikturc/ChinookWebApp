@@ -36,7 +36,6 @@ public class EmployeeController {
         return employee.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @RequestMapping
     @PostMapping
     public ResponseEntity<?> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
         try {

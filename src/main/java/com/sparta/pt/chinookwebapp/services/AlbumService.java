@@ -1,7 +1,6 @@
 package com.sparta.pt.chinookwebapp.services;
 
 import com.sparta.pt.chinookwebapp.converters.AlbumDTOConverter;
-import com.sparta.pt.chinookwebapp.converters.ArtistDTOConverter;
 import com.sparta.pt.chinookwebapp.dtos.AlbumDTO;
 import com.sparta.pt.chinookwebapp.models.Album;
 import com.sparta.pt.chinookwebapp.repositories.AlbumRepository;

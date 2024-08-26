@@ -7,21 +7,31 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.function.Function;
-
 @Component
 public class PaginationUtils<T> {
 
     private final PagedResourcesAssembler<T> pagedResourcesAssembler;
+
     public PaginationUtils(PagedResourcesAssembler<T> pagedResourcesAssembler) {
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
 
-    public ResponseEntity<PagedModel<EntityModel<T>>> createPagedResponse(Page<T> page) {
+    public ResponseEntity<CustomPagedResponse<T>> createPagedResponse(Page<T> page) {
+        PagedModel<EntityModel<T>> pagedModel = pagedResourcesAssembler.toModel(page, EntityModel::of);
 
-        PagedModel<EntityModel<T>> pagedModel = pagedResourcesAssembler.toModel(page,
-                EntityModel::of);
+        CustomPagedResponse.PageMetadata pageMetadata = new CustomPagedResponse.PageMetadata(
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getNumber()
+        );
 
-        return ResponseEntity.ok(pagedModel);
+        CustomPagedResponse<T> customResponse = new CustomPagedResponse<>(
+                pageMetadata,
+                pagedModel.getContent(),
+                pagedModel.getLinks().toList()
+        );
+
+        return ResponseEntity.ok(customResponse);
     }
 }

@@ -1,6 +1,8 @@
 package com.sparta.pt.chinookwebapp.dtos;
 
-public class PlaylistDTO {
+import org.springframework.hateoas.RepresentationModel;
+
+public class PlaylistDTO extends RepresentationModel<PlaylistDTO> {
     private Integer id;
     private String name;
 

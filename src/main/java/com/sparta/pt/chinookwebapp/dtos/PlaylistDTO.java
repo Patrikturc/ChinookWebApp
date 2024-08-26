@@ -4,6 +4,11 @@ public class PlaylistDTO {
     private Integer id;
     private String name;
 
+    public PlaylistDTO(Integer id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     public Integer getId() {
         return id;
     }

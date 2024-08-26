@@ -14,8 +14,11 @@ import java.util.Optional;
 @RequestMapping("/api/playlists")
 public class PlaylistController {
 
-    @Autowired
-    private PlaylistService playlistService;
+    private final PlaylistService playlistService;
+
+    public PlaylistController(PlaylistService playlistService) {
+        this.playlistService = playlistService;
+    }
 
     @GetMapping
     public ResponseEntity<Page<PlaylistDTO>> getAllPlaylists(@RequestParam(defaultValue = "0") int page,
